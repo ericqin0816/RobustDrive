@@ -2,6 +2,6 @@
 *.png binary
 *.jpg binary
 # Preserve frozen evidence bytes so published files retain their source SHA-256.
-reports/results/**/*.json -text
-reports/results/**/*.csv -text
-reports/results/**/*.yaml -text
+reports/results/**/*.json -text whitespace=cr-at-eol
+reports/results/**/*.csv -text whitespace=cr-at-eol
+reports/results/**/*.yaml -text whitespace=cr-at-eol

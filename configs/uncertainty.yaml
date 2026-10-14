@@ -1,0 +1,9 @@
+extends: augmented.yaml
+experiment:
+  name: uncertainty
+model:
+  dropout: 0.25
+uncertainty:
+  mc_samples: 20
+  error_threshold: 0.15
+  validation_quantile: 0.90

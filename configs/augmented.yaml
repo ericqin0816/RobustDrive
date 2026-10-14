@@ -1,0 +1,13 @@
+extends: baseline.yaml
+experiment:
+  name: augmented
+augmentation:
+  enabled: true
+  side_cameras: true
+  flip: true
+  brightness: true
+  contrast: true
+  shadows: true
+  translation: true
+  noise: true
+  blur: true

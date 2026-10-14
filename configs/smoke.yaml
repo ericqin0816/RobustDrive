@@ -1,0 +1,11 @@
+extends: uncertainty.yaml
+experiment:
+  name: smoke
+data:
+  csv_path: data/sample/driving_log.csv
+  kind: synthetic
+  gap_frames: 3
+training:
+  epochs: 2
+  batch_size: 16
+  device: cpu

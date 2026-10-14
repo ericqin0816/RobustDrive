@@ -1,0 +1,11 @@
+experiment:
+  name: baseline
+  seed: 42
+data:
+  csv_path: data/raw/driving_log.csv
+  kind: real
+  gap_frames: 30
+model:
+  dropout: 0.0
+training:
+  epochs: 30

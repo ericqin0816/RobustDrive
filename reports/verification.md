@@ -23,7 +23,7 @@ experiment and real autonomous simulator lap remains PENDING REAL DATA.**
   preprocessing equality, data-integrity rejection, metrics, and WebSocket tests.
 - Ran all major command-line `--help` entry points and lint checks.
 
-The final local suite passed **40 tests**. Package/PyTorch/torchvision/OpenCV
+The original local suite passed **40 tests**. Package/PyTorch/torchvision/OpenCV
 imports and `pip check` passed. Every exploratory notebook code cell executed;
 the committed notebook intentionally retains empty outputs. Local software was
 Python 3.12.10, PyTorch 2.14.1+cpu, torchvision 0.29.1+cpu, and OpenCV 4.14.0.
@@ -45,6 +45,22 @@ diagrams were inspected in the signed-in browser. The workflow tests Linux/Pytho
 3.11 and Windows/Python 3.12 using CPU PyTorch. Current CI status is available on
 the [Actions page](https://github.com/ericqin0816/RobustDrive/actions/workflows/tests.yml)
 and README badge. CI never downloads the simulator or real datasets.
+
+## Windows play-and-learn setup
+
+The official Term 1 Version 2 Windows simulator was downloaded from the URL linked
+in Udacity's README, extracted locally, and opened successfully to its menu. A
+desktop shortcut and a Documents-folder junction to `data/raw` were created. The
+launcher was opened and visually checked while attached to the running simulator.
+It waits for the game to close before inspecting, snapshotting, training, and
+evaluating the user's recording. No real training was started without a recording.
+
+The expanded suite passed **44 tests**, including snapshot preservation/reuse,
+stationary-frame filtering, synthetic-data rejection, and changed-snapshot rejection.
+After final launcher refinements, the four recording tests and lint passed again.
+Native automated clicks were rejected by Windows (`SendInput`, error 87), so the
+user must select Training Mode and the recording folder in the game's menus.
+Actual Unity network steering and real autonomous performance remain unverified.
 
 ## Reproduce
 

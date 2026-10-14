@@ -15,6 +15,9 @@ uncertainty can flag unreliable steering predictions.
 with synthetic images. No real simulator dataset, autonomous lap, robustness
 finding, or uncertainty claim is reported here. See [verification](reports/verification.md).
 
+**Windows shortcut:** [Play & Learn](docs/play.md) lets you record a drive, stop
+recording, and close the game to start training and analysis automatically.
+
 ## 1. Overview
 
 A person drives, the simulator records images and steering, a compact PyTorch CNN

@@ -103,3 +103,39 @@ def test_known_autonomy_values(tmp_path):
 def test_invalid_telemetry_fails():
     with pytest.raises(ValueError):
         decode_telemetry({"speed": np.nan, "image": ""})
+
+
+def test_lap_started_during_takeover_is_not_unassisted(tmp_path):
+    pd.DataFrame({"elapsed_seconds": [0, 10, 20, 30], "steering": [0, 0.1, 0.2, 0.3]}).to_csv(
+        tmp_path / "telemetry.csv", index=False
+    )
+    pd.DataFrame(
+        {
+            "elapsed_seconds": [2, 5, 8, 25],
+            "event": ["takeover", "lap_start", "resume", "lap_complete"],
+        }
+    ).to_csv(tmp_path / "events.csv", index=False)
+    write_json(
+        tmp_path / "drive_metadata.json",
+        {"source": "synthetic-protocol-test", "training_data_kind": "synthetic"},
+    )
+    result = autonomy_metrics(tmp_path)
+    assert result["lap_completion_percent"] == 100
+    assert result["unassisted_lap_completion_percent"] == 0
+
+
+def test_manual_tail_is_included_in_duration(tmp_path):
+    pd.DataFrame({"elapsed_seconds": [0, 10], "steering": [0, 0.1]}).to_csv(
+        tmp_path / "telemetry.csv", index=False
+    )
+    pd.DataFrame({"elapsed_seconds": [10], "event": ["takeover"]}).to_csv(
+        tmp_path / "events.csv", index=False
+    )
+    write_json(
+        tmp_path / "drive_metadata.json",
+        {"source": "synthetic-protocol-test", "training_data_kind": "synthetic"},
+    )
+    write_json(tmp_path / "session_end.json", {"elapsed_seconds": 20})
+    result = autonomy_metrics(tmp_path)
+    assert result["time_autonomy_percent"] == 50
+    assert result["lap_completion_percent"] is None

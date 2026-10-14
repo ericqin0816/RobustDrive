@@ -209,6 +209,15 @@ def figures_main() -> None:
     for folder in folders:
         if not (folder / "metadata.json").is_file():
             continue
+        # A resumed run may have a new best checkpoint but old evaluation files.
+        from robustdrive.evaluation.runner import EvaluationRun
+
+        verified = EvaluationRun(folder / "best.pt")
+        for filename in ("evaluation.json", "robustness.json", "uncertainty.json"):
+            if (folder / filename).exists():
+                saved = json.loads((folder / filename).read_text(encoding="utf-8"))
+                if saved["checkpoint_sha256"] != verified.provenance["checkpoint_sha256"]:
+                    raise ValueError(f"Stale {folder / filename}; rerun that evaluation first.")
         status = json.loads((folder / "metadata.json").read_text(encoding="utf-8"))["status"]
         figures = Path("reports/figures") / folder.name
         if (folder / "history.csv").exists():

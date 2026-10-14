@@ -114,6 +114,7 @@ def train(config: dict, resume: str | Path | None = None) -> Path:
         "resume_from": str(resume) if resume else None,
     }
     save_config(config, output / "config.yaml")
+    write_json(output / "metrics.json", {"status": metadata["status"], "complete": False})
     write_json(output / "metadata.json", metadata)
     write_json(output / "inspection.json", log.inspection)
     write_json(

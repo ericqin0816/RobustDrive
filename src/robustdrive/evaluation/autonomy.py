@@ -21,11 +21,20 @@ def autonomy_metrics(folder: str | Path, penalty_seconds: float = 6.0) -> dict:
     times = telemetry.elapsed_seconds.to_numpy()
     if not np.isfinite(times).all() or np.any(np.diff(times) < 0):
         raise ValueError("Telemetry timestamps must be finite and monotonic.")
+    event_times = events.elapsed_seconds.to_numpy(dtype=float)
+    if not np.isfinite(event_times).all() or np.any(np.diff(event_times) < 0):
+        raise ValueError("Event timestamps must be finite and monotonic.")
     takeovers = events[events.event == "takeover"].elapsed_seconds.to_numpy()
     laps, start = [], None
+    manual, manual_at_start = False, False
     for event in events.itertuples():
+        if event.event == "takeover":
+            manual = True
+        elif event.event == "resume":
+            manual = False
         if event.event == "lap_start":
             start = float(event.elapsed_seconds)
+            manual_at_start = manual
         elif event.event in {"lap_complete", "lap_abort"} and start is not None:
             end = float(event.elapsed_seconds)
             lap_events = events[(events.elapsed_seconds >= start) & (events.elapsed_seconds <= end)]
@@ -38,6 +47,7 @@ def autonomy_metrics(folder: str | Path, penalty_seconds: float = 6.0) -> dict:
                     "completed": event.event == "lap_complete",
                     "unassisted": event.event == "lap_complete"
                     and interventions == 0
+                    and not manual_at_start
                     and failures == 0,
                     "interventions": interventions,
                     "failure_events": failures,
@@ -66,8 +76,17 @@ def autonomy_metrics(folder: str | Path, penalty_seconds: float = 6.0) -> dict:
             manual_start = None
     if manual_start is not None:
         manual_seconds += max(0, end - manual_start)
-    changes = np.diff(telemetry.steering.to_numpy())
+    # Do not call a jump across a manual-control gap autonomous steering roughness.
+    automatic = np.ones(len(times), dtype=bool)
+    if "manual" in telemetry:
+        automatic = ~telemetry.manual.astype(str).str.lower().isin(["true", "1"]).to_numpy()
+    adjacent = automatic[:-1] & automatic[1:]
+    for i in range(len(adjacent)):
+        if np.any((takeovers > times[i]) & (takeovers <= times[i + 1])):
+            adjacent[i] = False
+    changes = np.diff(telemetry.steering.to_numpy())[adjacent]
     dt = np.diff(times)
+    dt = dt[adjacent]
     rates = changes[dt > 0] / dt[dt > 0]
     terminal_laps = len(laps)
     attempts = terminal_laps + int(start is not None)
@@ -104,7 +123,7 @@ def autonomy_metrics(folder: str | Path, penalty_seconds: float = 6.0) -> dict:
         "time_autonomy_percent": 100 * max(0, 1 - manual_seconds / duration)
         if duration > 0
         else None,
-        "mean_absolute_steering_change": float(abs(changes).mean()),
+        "mean_absolute_steering_change": float(abs(changes).mean()) if len(changes) else None,
         "rms_steering_rate_per_second": float(np.sqrt(np.mean(rates**2))) if len(rates) else None,
         "laps": laps,
         "limitations": "Events are manual annotations. Multiple failure events may describe one incident. Unfinished laps count as incomplete; fractional distance completion is unavailable.",

@@ -91,11 +91,15 @@ def create_app(session: DriveSession) -> web.Application:
                         event, data = value
                         if event != "telemetry":
                             continue
-                        if not data or session.manual:
+                        if not data:
                             await ws.send_str(encode_event("manual", {}))
                             continue
                         rgb, speed = decode_telemetry(data)
                         row = await asyncio.to_thread(session.step, rgb, speed)
+                        # Honor a takeover even if it arrived while inference was running.
+                        if session.manual:
+                            await ws.send_str(encode_event("manual", {}))
+                            continue
                         await ws.send_str(
                             encode_event(
                                 "steer",

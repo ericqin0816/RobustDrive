@@ -72,6 +72,11 @@ def aggregate(
         meta = json.loads((folder / "metadata.json").read_text(encoding="utf-8"))
         if meta["data_kind"] != kind:
             continue
+        training_metrics = folder / "metrics.json"
+        if not training_metrics.exists() or not json.loads(training_metrics.read_text()).get(
+            "complete"
+        ):
+            continue
         c = load_config(folder / "config.yaml")
         d = c["data"]
         log = load_log(d["csv_path"], d["image_root"], d["kind"], d["invalid_policy"])

@@ -15,7 +15,9 @@ def evaluate_uncertainty(
     error_threshold: float | None = None,
 ) -> dict:
     c = run.config["uncertainty"]
-    passes = passes or c["mc_samples"]
+    passes = c["mc_samples"] if passes is None else passes
+    if passes < 2:
+        raise ValueError("MC uncertainty needs at least two stochastic passes.")
     error_threshold = error_threshold if error_threshold is not None else c["error_threshold"]
     validation = run.predict(split="validation", passes=passes)
     threshold = float(np.quantile(validation.uncertainty, c["validation_quantile"]))
@@ -72,12 +74,17 @@ def evaluate_uncertainty(
     )
     high_error = frame.absolute_error > error_threshold
     high_u = frame.uncertainty > threshold
+
+    def examples(part, key):
+        # Prefer different source frames to nine corruptions of one timestamp.
+        return part.sort_values(key, ascending=False).drop_duplicates("row_id").head(9)
+
     categories = {
-        "highest_error": frame.nlargest(9, "absolute_error"),
-        "highest_uncertainty": frame.nlargest(9, "uncertainty"),
-        "high_error_high_uncertainty": frame[high_error & high_u].nlargest(9, "absolute_error"),
-        "confidently_wrong": frame[high_error & ~high_u].nlargest(9, "absolute_error"),
-        "low_error_high_uncertainty": frame[~high_error & high_u].nlargest(9, "uncertainty"),
+        "highest_error": examples(frame, "absolute_error"),
+        "highest_uncertainty": examples(frame, "uncertainty"),
+        "high_error_high_uncertainty": examples(frame[high_error & high_u], "absolute_error"),
+        "confidently_wrong": examples(frame[high_error & ~high_u], "absolute_error"),
+        "low_error_high_uncertainty": examples(frame[~high_error & high_u], "uncertainty"),
     }
     for name, subset in categories.items():
         subset.to_csv(run.output / f"failure_cases_{name}.csv", index=False)

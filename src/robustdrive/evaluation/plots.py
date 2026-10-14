@@ -94,9 +94,10 @@ def example_grid(frame: pd.DataFrame, path: Path, status: str) -> None:
             image = corrupt(image, condition, severity, int(row.corruption_seed))
         ax.imshow(image)
         uncertainty = row.get("uncertainty", np.nan)
+        uncertainty_text = f"{uncertainty:.3f}" if np.isfinite(uncertainty) else "not measured"
         ax.set_title(
             f"target {row.target:+.3f} | pred {row.prediction:+.3f}\n"
-            f"error {abs(row.target - row.prediction):.3f} | std {uncertainty:.3f}\n"
+            f"error {abs(row.target - row.prediction):.3f} | std {uncertainty_text}\n"
             f"{condition}, severity {severity}",
             fontsize=8,
         )

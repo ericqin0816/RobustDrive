@@ -31,9 +31,12 @@ class NeuralSteering:
         if mc_samples and (mc_samples < 2 or config["model"]["dropout"] == 0):
             raise ValueError("Use >=2 MC samples and a checkpoint trained with dropout.")
         self.mc_samples = mc_samples
-        self.provenance = {"checkpoint_sha256": checkpoint_digest(checkpoint),
-                           "training_data_kind": config["data"]["kind"],
-                           "preprocessing": config["preprocessing"], "mc_samples": mc_samples}
+        self.provenance = {
+            "checkpoint_sha256": checkpoint_digest(checkpoint),
+            "training_data_kind": config["data"]["kind"],
+            "preprocessing": config["preprocessing"],
+            "mc_samples": mc_samples,
+        }
 
     @torch.inference_mode()
     def predict(self, rgb: np.ndarray) -> dict[str, float | None]:
@@ -45,14 +48,25 @@ class NeuralSteering:
             steering, std = self.model(tensor).item(), None
         if not np.isfinite(steering) or (std is not None and not np.isfinite(std)):
             raise ValueError("Nonfinite model prediction.")
-        return {"prediction": steering, "steering": float(np.clip(steering, -1, 1)), "uncertainty": std}
+        return {
+            "prediction": steering,
+            "steering": float(np.clip(steering, -1, 1)),
+            "uncertainty": std,
+        }
 
 
 class DriveSession:
     """One append-only run, timestamped telemetry and explicit human event annotations."""
 
-    def __init__(self, policy: SteeringPolicy, output: str | Path, controller: SpeedController,
-                 metadata: dict, uncertainty_threshold: float | None = None, record_frames: bool = False):
+    def __init__(
+        self,
+        policy: SteeringPolicy,
+        output: str | Path,
+        controller: SpeedController,
+        metadata: dict,
+        uncertainty_threshold: float | None = None,
+        record_frames: bool = False,
+    ):
         self.policy, self.controller = policy, controller
         self.output = Path(output)
         self.output.mkdir(parents=True, exist_ok=True)
@@ -62,19 +76,46 @@ class DriveSession:
         self.manual, self.lap_open = False, False
         self.threshold, self.record_frames = uncertainty_threshold, record_frames
         self.frame = 0
-        self.telemetry_file = (self.output / "telemetry.csv").open("w", newline="", encoding="utf-8")
+        self.telemetry_file = (self.output / "telemetry.csv").open(
+            "w", newline="", encoding="utf-8"
+        )
         self.events_file = (self.output / "events.csv").open("w", newline="", encoding="utf-8")
-        self.telemetry = csv.DictWriter(self.telemetry_file, fieldnames=["timestamp", "elapsed_seconds", "frame",
-            "prediction", "steering", "speed", "throttle", "uncertainty", "risk_flag", "manual", "inference_ms", "image"])
-        self.events = csv.DictWriter(self.events_file, fieldnames=["timestamp", "elapsed_seconds", "event", "note"])
+        self.telemetry = csv.DictWriter(
+            self.telemetry_file,
+            fieldnames=[
+                "timestamp",
+                "elapsed_seconds",
+                "frame",
+                "prediction",
+                "steering",
+                "speed",
+                "throttle",
+                "uncertainty",
+                "risk_flag",
+                "manual",
+                "inference_ms",
+                "image",
+            ],
+        )
+        self.events = csv.DictWriter(
+            self.events_file, fieldnames=["timestamp", "elapsed_seconds", "event", "note"]
+        )
         self.telemetry.writeheader()
         self.events.writeheader()
         self.telemetry_file.flush()
         self.events_file.flush()
-        write_json(self.output / "drive_metadata.json", {"timestamp": utc_now(), **metadata,
-            "target_speed_mph": controller.target_speed, "kp": controller.kp,
-            "max_throttle": controller.max_throttle, "uncertainty_threshold": uncertainty_threshold,
-            "annotation_policy": "Human events; no automatic lane/collision/lap ground truth."})
+        write_json(
+            self.output / "drive_metadata.json",
+            {
+                "timestamp": utc_now(),
+                **metadata,
+                "target_speed_mph": controller.target_speed,
+                "kp": controller.kp,
+                "max_throttle": controller.max_throttle,
+                "uncertainty_threshold": uncertainty_threshold,
+                "annotation_policy": "Human events; no automatic lane/collision/lap ground truth.",
+            },
+        )
 
     def event(self, event: str, note: str = "") -> None:
         if event not in EVENTS:
@@ -95,8 +136,14 @@ class DriveSession:
             if not self.manual:
                 raise ValueError("No active takeover to resume.")
             self.manual = False
-        self.events.writerow({"timestamp": utc_now(), "elapsed_seconds": time.monotonic() - self.started,
-                              "event": event, "note": note})
+        self.events.writerow(
+            {
+                "timestamp": utc_now(),
+                "elapsed_seconds": time.monotonic() - self.started,
+                "event": event,
+                "note": note,
+            }
+        )
         self.events_file.flush()
 
     def step(self, rgb: np.ndarray, speed: float) -> dict:
@@ -112,15 +159,27 @@ class DriveSession:
             path.parent.mkdir(exist_ok=True)
             Image.fromarray(rgb).save(path)
             filename = str(path.relative_to(self.output))
-        row = {"timestamp": utc_now(), "elapsed_seconds": time.monotonic() - self.started,
-               "frame": self.frame, **result, "speed": speed, "throttle": throttle,
-               "risk_flag": bool(flagged), "manual": self.manual,
-               "inference_ms": inference_ms, "image": filename}
+        row = {
+            "timestamp": utc_now(),
+            "elapsed_seconds": time.monotonic() - self.started,
+            "frame": self.frame,
+            **result,
+            "speed": speed,
+            "throttle": throttle,
+            "risk_flag": bool(flagged),
+            "manual": self.manual,
+            "inference_ms": inference_ms,
+            "image": filename,
+        }
         self.telemetry.writerow(row)
         self.telemetry_file.flush()
         self.frame += 1
         return row
 
     def close(self) -> None:
+        write_json(
+            self.output / "session_end.json",
+            {"timestamp": utc_now(), "elapsed_seconds": time.monotonic() - self.started},
+        )
         self.telemetry_file.close()
         self.events_file.close()

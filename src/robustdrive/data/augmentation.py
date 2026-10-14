@@ -20,8 +20,9 @@ class Augmenter:
     def __init__(self, config: dict):
         self.config = config
 
-    def __call__(self, image: np.ndarray, steering: float,
-                 rng: np.random.Generator) -> tuple[np.ndarray, float]:
+    def __call__(
+        self, image: np.ndarray, steering: float, rng: np.random.Generator
+    ) -> tuple[np.ndarray, float]:
         c = self.config
         if not c["enabled"]:
             return image, steering

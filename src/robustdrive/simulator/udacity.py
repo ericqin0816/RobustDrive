@@ -56,8 +56,18 @@ def create_app(session: DriveSession) -> web.Application:
         await ws.prepare(request)
         connected = True
         sid = uuid.uuid4().hex
-        await ws.send_str("0" + json.dumps({"sid": sid, "upgrades": [], "pingInterval": 25000,
-                                          "pingTimeout": 60000, "maxPayload": 6_000_000}))
+        await ws.send_str(
+            "0"
+            + json.dumps(
+                {
+                    "sid": sid,
+                    "upgrades": [],
+                    "pingInterval": 25000,
+                    "pingTimeout": 60000,
+                    "maxPayload": 6_000_000,
+                }
+            )
+        )
         await ws.send_str("40")
 
         async def heartbeat():
@@ -86,11 +96,20 @@ def create_app(session: DriveSession) -> web.Application:
                             continue
                         rgb, speed = decode_telemetry(data)
                         row = await asyncio.to_thread(session.step, rgb, speed)
-                        await ws.send_str(encode_event("steer", {"steering_angle": str(row["steering"]),
-                                                               "throttle": str(row["throttle"])}))
+                        await ws.send_str(
+                            encode_event(
+                                "steer",
+                                {
+                                    "steering_angle": str(row["steering"]),
+                                    "throttle": str(row["throttle"]),
+                                },
+                            )
+                        )
                     except (ValueError, TypeError, OSError) as error:
                         LOGGER.warning("Invalid telemetry: %s", error)
-                        await ws.send_str(encode_event("steer", {"steering_angle": "0", "throttle": "0"}))
+                        await ws.send_str(
+                            encode_event("steer", {"steering_angle": "0", "throttle": "0"})
+                        )
                 elif packet in {"1", "41"}:
                     break
         finally:
@@ -113,8 +132,14 @@ def create_app(session: DriveSession) -> web.Application:
         return web.json_response({"recorded": body["event"]})
 
     async def health(request: web.Request) -> web.Response:
-        return web.json_response({"adapter": "udacity-websocket", "connected": connected,
-                                  "frames": session.frame, "manual": session.manual})
+        return web.json_response(
+            {
+                "adapter": "udacity-websocket",
+                "connected": connected,
+                "frames": session.frame,
+                "manual": session.manual,
+            }
+        )
 
     app.router.add_get("/socket.io/", socket)
     app.router.add_get("/", health)

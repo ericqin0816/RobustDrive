@@ -23,8 +23,9 @@ def json_safe(value):
 def write_json(path: str | Path, value: dict) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(json_safe(value), indent=2, allow_nan=False) + "\n",
-                    encoding="utf-8")
+    path.write_text(
+        json.dumps(json_safe(value), indent=2, allow_nan=False) + "\n", encoding="utf-8"
+    )
 
 
 def utc_now() -> str:
@@ -32,5 +33,8 @@ def utc_now() -> str:
 
 
 def result_status(kind: str) -> str:
-    return ("SYNTHETIC SMOKE ONLY — PENDING REAL DATA" if kind == "synthetic"
-            else "REAL DATA — OFFLINE EVALUATION; CLOSED-LOOP CLAIMS REQUIRE DRIVE LOGS")
+    return (
+        "SYNTHETIC SMOKE ONLY — PENDING REAL DATA"
+        if kind == "synthetic"
+        else "REAL DATA — OFFLINE EVALUATION; CLOSED-LOOP CLAIMS REQUIRE DRIVE LOGS"
+    )

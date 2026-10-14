@@ -30,8 +30,9 @@ class Preprocessor:
         end = rgb.shape[0] - self.crop_bottom
         if end <= self.crop_top:
             raise ValueError(f"Crop removes entire {rgb.shape[0]}-pixel image.")
-        cropped = rgb[self.crop_top:end]
-        resized = cv2.resize(cropped, (self.target_width, self.target_height),
-                             interpolation=cv2.INTER_AREA)
+        cropped = rgb[self.crop_top : end]
+        resized = cv2.resize(
+            cropped, (self.target_width, self.target_height), interpolation=cv2.INTER_AREA
+        )
         tensor = torch.from_numpy(np.ascontiguousarray(resized.transpose(2, 0, 1)))
         return tensor.float().div(127.5).sub(1.0)

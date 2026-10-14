@@ -8,23 +8,47 @@ import yaml
 
 DEFAULTS: dict[str, Any] = {
     "experiment": {"name": "baseline", "seed": 42, "output_root": "experiments/results"},
-    "data": {"csv_path": "data/raw/driving_log.csv", "image_root": None,
-             "kind": "real", "train_split": 0.70, "validation_split": 0.15,
-             "test_split": 0.15, "gap_frames": 30, "invalid_policy": "skip"},
-    "preprocessing": {"target_height": 66, "target_width": 200,
-                      "crop_top": 50, "crop_bottom": 20},
-    "augmentation": {"enabled": False, "flip": False, "flip_probability": 0.5,
-                     "side_cameras": False, "steering_correction": 0.2,
-                     "brightness": False, "contrast": False, "shadows": False,
-                     "translation": False, "translation_pixels": 12,
-                     "translation_correction": 0.002, "rotation": False,
-                     "rotation_degrees": 2.0, "noise": False, "blur": False},
+    "data": {
+        "csv_path": "data/raw/driving_log.csv",
+        "image_root": None,
+        "kind": "real",
+        "train_split": 0.70,
+        "validation_split": 0.15,
+        "test_split": 0.15,
+        "gap_frames": 30,
+        "invalid_policy": "skip",
+    },
+    "preprocessing": {"target_height": 66, "target_width": 200, "crop_top": 50, "crop_bottom": 20},
+    "augmentation": {
+        "enabled": False,
+        "flip": False,
+        "flip_probability": 0.5,
+        "side_cameras": False,
+        "steering_correction": 0.2,
+        "brightness": False,
+        "contrast": False,
+        "shadows": False,
+        "translation": False,
+        "translation_pixels": 12,
+        "translation_correction": 0.002,
+        "rotation": False,
+        "rotation_degrees": 2.0,
+        "noise": False,
+        "blur": False,
+    },
     "model": {"architecture": "nvidia_cnn", "dropout": 0.0},
-    "training": {"epochs": 30, "batch_size": 64, "learning_rate": 0.0001,
-                 "weight_decay": 0.0001, "patience": 6, "num_workers": 0,
-                 "device": "auto", "cpu_threads": 4, "scheduler_patience": 2},
-    "uncertainty": {"mc_samples": 20, "error_threshold": 0.15,
-                    "validation_quantile": 0.90},
+    "training": {
+        "epochs": 30,
+        "batch_size": 64,
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0001,
+        "patience": 6,
+        "num_workers": 0,
+        "device": "auto",
+        "cpu_threads": 4,
+        "scheduler_patience": 2,
+    },
+    "uncertainty": {"mc_samples": 20, "error_threshold": 0.15, "validation_quantile": 0.90},
     "robustness": {"severity_levels": [0, 1, 2, 3, 4, 5]},
 }
 
@@ -84,6 +108,7 @@ def load_config(path: str | Path) -> dict:
         parent = raw.pop("extends", None)
         base = read(file.parent / parent, seen | {file}) if parent else DEFAULTS
         return merge(base, raw)
+
     return validate(read(Path(path), set()))
 
 

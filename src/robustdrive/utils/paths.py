@@ -10,8 +10,12 @@ def resolve_image(value: str, csv_dir: Path, image_root: Path | None = None) -> 
     candidates = []
     if image_root is not None:
         candidates += [image_root / source.name, image_root / normalized]
-    candidates += [csv_dir / normalized, csv_dir / "IMG" / source.name,
-                   csv_dir / source.name, source]
+    candidates += [
+        csv_dir / normalized,
+        csv_dir / "IMG" / source.name,
+        csv_dir / source.name,
+        source,
+    ]
     for candidate in candidates:
         if candidate.is_file():
             return candidate.resolve()

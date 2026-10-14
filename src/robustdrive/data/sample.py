@@ -27,12 +27,18 @@ def create_sample_data(output: str | Path, count: int = 120, seed: int = 42) -> 
             image[:65] = (107, 155, 190)
             image[65:] = (74, 118, 62)
             horizon = int(160 + steering * 80 + offset)
-            road = np.array([[horizon - 20, 65], [horizon + 20, 65],
-                             [310 + offset, 159], [10 + offset, 159]], np.int32)
+            road = np.array(
+                [[horizon - 20, 65], [horizon + 20, 65], [310 + offset, 159], [10 + offset, 159]],
+                np.int32,
+            )
             cv2.fillPoly(image, [road], (75, 76, 78))
             cv2.line(image, (horizon, 66), (160 + offset, 159), (230, 217, 124), 2)
-            image = np.clip(image.astype(float) + rng.normal(0, 2, image.shape), 0, 255).astype(np.uint8)
-            cv2.putText(image, "SYNTHETIC", (6, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
+            image = np.clip(image.astype(float) + rng.normal(0, 2, image.shape), 0, 255).astype(
+                np.uint8
+            )
+            cv2.putText(
+                image, "SYNTHETIC", (6, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1
+            )
             name = f"IMG/{camera}_{i:06d}.jpg"
             Image.fromarray(image).save(output / name)
             paths.append(name)
@@ -42,7 +48,14 @@ def create_sample_data(output: str | Path, count: int = 120, seed: int = 42) -> 
         writer = csv.writer(stream)
         writer.writerow(["center", "left", "right", "steering", "throttle", "brake", "speed"])
         writer.writerows(rows)
-    write_json(output / "dataset_metadata.json", {
-        "kind": "synthetic", "purpose": "SMOKE TEST ONLY; PENDING REAL DATA",
-        "frames": count, "seed": seed, "generator": "robustdrive.data.sample"})
+    write_json(
+        output / "dataset_metadata.json",
+        {
+            "kind": "synthetic",
+            "purpose": "SMOKE TEST ONLY; PENDING REAL DATA",
+            "frames": count,
+            "seed": seed,
+            "generator": "robustdrive.data.sample",
+        },
+    )
     return path

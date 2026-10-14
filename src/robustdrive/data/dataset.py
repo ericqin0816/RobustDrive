@@ -37,22 +37,38 @@ class DrivingLog:
     kind: str
 
 
-def load_log(csv_path: str | Path, image_root: str | Path | None = None,
-             kind: str = "real", invalid_policy: str = "skip") -> DrivingLog:
+def load_log(
+    csv_path: str | Path,
+    image_root: str | Path | None = None,
+    kind: str = "real",
+    invalid_policy: str = "skip",
+) -> DrivingLog:
     """Read header/headerless logs; report every excluded row/image, never fake pixels."""
     path = Path(csv_path)
     if not path.is_file():
-        raise FileNotFoundError(f"{path} not found. Collect simulator data first; "
-                                "use configs/smoke.yaml for synthetic validation.")
+        raise FileNotFoundError(
+            f"{path} not found. Collect simulator data first; "
+            "use configs/smoke.yaml for synthetic validation."
+        )
     marker = path.parent / "dataset_metadata.json"
-    if marker.is_file() and json.loads(marker.read_text(encoding="utf-8")).get("kind") == "synthetic":
+    if (
+        marker.is_file()
+        and json.loads(marker.read_text(encoding="utf-8")).get("kind") == "synthetic"
+    ):
         kind = "synthetic"  # A config cannot promote generated data into a research result.
     if kind not in {"real", "synthetic"} or invalid_policy not in {"skip", "error"}:
         raise ValueError("Invalid dataset kind or invalid_policy.")
     digest = hashlib.sha256(path.read_bytes())
     root = Path(image_root) if image_root else None
-    report = {"rows": 0, "valid_label_rows": 0, "invalid_rows": [], "missing_images": [],
-              "corrupted_images": [], "camera_counts": dict.fromkeys(CAMERAS, 0), "kind": kind}
+    report = {
+        "rows": 0,
+        "valid_label_rows": 0,
+        "invalid_rows": [],
+        "missing_images": [],
+        "corrupted_images": [],
+        "camera_counts": dict.fromkeys(CAMERAS, 0),
+        "kind": kind,
+    }
     records = []
     with path.open(newline="", encoding="utf-8-sig") as stream:
         rows = list(csv.reader(stream))
@@ -98,8 +114,9 @@ def load_log(csv_path: str | Path, image_root: str | Path | None = None,
                 # Detect file changes even when CSV paths and labels did not change.
                 digest.update(resolved.read_bytes())
             except (OSError, ValueError) as error:
-                report["corrupted_images"].append({"row": row_id, "camera": camera,
-                                                    "reason": str(error)})
+                report["corrupted_images"].append(
+                    {"row": row_id, "camera": camera, "reason": str(error)}
+                )
                 continue
             images[camera] = resolved
             report["camera_counts"][camera] += 1
@@ -122,15 +139,26 @@ def load_log(csv_path: str | Path, image_root: str | Path | None = None,
 
 
 class DrivingDataset(Dataset):
-    def __init__(self, records: list[Record], indices: list[int], preprocessing: dict,
-                 augmentation: dict, training: bool = False, seed: int = 42):
+    def __init__(
+        self,
+        records: list[Record],
+        indices: list[int],
+        preprocessing: dict,
+        augmentation: dict,
+        training: bool = False,
+        seed: int = 42,
+    ):
         self.preprocess = Preprocessor(**preprocessing)
         self.augment = Augmenter(augmentation)
         self.training, self.seed, self.epoch = training, seed, 0
         cameras = CAMERAS if training and augmentation["side_cameras"] else ("center",)
         correction = augmentation["steering_correction"]
-        self.samples = [(records[i], cam, camera_steering(records[i].steering, cam, correction))
-                        for i in indices for cam in cameras if cam in records[i].images]
+        self.samples = [
+            (records[i], cam, camera_steering(records[i].steering, cam, correction))
+            for i in indices
+            for cam in cameras
+            if cam in records[i].images
+        ]
         if not self.samples:
             raise ValueError("No readable camera images in this split.")
 

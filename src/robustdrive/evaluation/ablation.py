@@ -40,19 +40,31 @@ def run_ablations(smoke: bool = False) -> None:
         checkpoint = output / "best.pt"
         if checkpoint.exists() and (output / "metrics.json").exists():
             previous = load_config(output / "config.yaml")
-            if previous != config or not json.loads((output / "metrics.json").read_text())["complete"]:
-                raise ValueError(f"Existing incomplete/different run at {output}; resume it explicitly.")
+            if (
+                previous != config
+                or not json.loads((output / "metrics.json").read_text())["complete"]
+            ):
+                raise ValueError(
+                    f"Existing incomplete/different run at {output}; resume it explicitly."
+                )
             print(f"Reusing completed {output.name}")
         else:
             train(config)
         run = EvaluationRun(checkpoint)
         # Loading EvaluationRun verifies data fingerprint even when reusing training.
-        if not (output / "evaluation.json").exists() or json.loads((output / "evaluation.json").read_text())["checkpoint_sha256"] != run.provenance["checkpoint_sha256"]:
+        if (
+            not (output / "evaluation.json").exists()
+            or json.loads((output / "evaluation.json").read_text())["checkpoint_sha256"]
+            != run.provenance["checkpoint_sha256"]
+        ):
             evaluate(run)
 
 
-def aggregate(root: str | Path = "experiments/results", output: str | Path = "reports/tables",
-              kind: str = "real") -> pd.DataFrame:
+def aggregate(
+    root: str | Path = "experiments/results",
+    output: str | Path = "reports/tables",
+    kind: str = "real",
+) -> pd.DataFrame:
     rows = []
     for folder in sorted(Path(root).glob("*")):
         if not (folder / "metadata.json").is_file() or not (folder / "best.pt").is_file():
@@ -66,13 +78,27 @@ def aggregate(root: str | Path = "experiments/results", output: str | Path = "re
         if log.fingerprint != meta["data_fingerprint"]:
             raise ValueError(f"Dataset changed for {folder.name}; aggregation would be stale.")
         digest = checkpoint_digest(folder / "best.pt")
-        row = {"Experiment": folder.name, "Status": meta["status"],
-               "Training samples": meta["training_samples"], "Parameters": meta["parameters"],
-               "Recovery Data": c["augmentation"]["side_cameras"], "Flip": c["augmentation"]["flip"],
-               "Visual Augmentation": c["augmentation"]["brightness"], "Dropout": c["model"]["dropout"]}
-        for file, mapping in (("metrics.json", {"training_seconds": "Training seconds", "best_validation_mse": "Best validation MSE"}),
-                              ("evaluation.json", {"mae": "MAE", "rmse": "RMSE", "mse": "MSE"}),
-                              ("robustness.json", {"mean_corrupted_mae": "Mean corrupted MAE"})):
+        row = {
+            "Experiment": folder.name,
+            "Status": meta["status"],
+            "Training samples": meta["training_samples"],
+            "Parameters": meta["parameters"],
+            "Recovery Data": c["augmentation"]["side_cameras"],
+            "Flip": c["augmentation"]["flip"],
+            "Visual Augmentation": c["augmentation"]["brightness"],
+            "Dropout": c["model"]["dropout"],
+        }
+        for file, mapping in (
+            (
+                "metrics.json",
+                {
+                    "training_seconds": "Training seconds",
+                    "best_validation_mse": "Best validation MSE",
+                },
+            ),
+            ("evaluation.json", {"mae": "MAE", "rmse": "RMSE", "mse": "MSE"}),
+            ("robustness.json", {"mean_corrupted_mae": "Mean corrupted MAE"}),
+        ):
             if (folder / file).is_file():
                 value = json.loads((folder / file).read_text(encoding="utf-8"))
                 if "checkpoint_sha256" in value and value["checkpoint_sha256"] != digest:
@@ -81,8 +107,12 @@ def aggregate(root: str | Path = "experiments/results", output: str | Path = "re
         if (folder / "uncertainty.json").is_file():
             value = json.loads((folder / "uncertainty.json").read_text(encoding="utf-8"))
             if value["checkpoint_sha256"] == digest:
-                row.update({"Uncertainty/Error Pearson": value["clean"]["pearson"],
-                            "Uncertainty/Error Spearman": value["clean"]["spearman"]})
+                row.update(
+                    {
+                        "Uncertainty/Error Pearson": value["clean"]["pearson"],
+                        "Uncertainty/Error Spearman": value["clean"]["spearman"],
+                    }
+                )
         rows.append(row)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
@@ -91,8 +121,22 @@ def aggregate(root: str | Path = "experiments/results", output: str | Path = "re
     if frame.empty:
         frame = pd.DataFrame(columns=["Experiment", "Status", "MAE", "RMSE", "MSE"])
     frame.to_csv(output / f"{prefix}.csv", index=False)
-    lines = ["# Ablation measurements", "", "PENDING REAL DATA" if kind == "real" and not rows else ("SYNTHETIC SMOKE ONLY — NOT RESEARCH RESULTS" if kind == "synthetic" else "Recorded offline measurements"), ""]
-    lines += ["| " + " | ".join(frame.columns) + " |", "| " + " | ".join(["---"] * len(frame.columns)) + " |"]
+    lines = [
+        "# Ablation measurements",
+        "",
+        "PENDING REAL DATA"
+        if kind == "real" and not rows
+        else (
+            "SYNTHETIC SMOKE ONLY — NOT RESEARCH RESULTS"
+            if kind == "synthetic"
+            else "Recorded offline measurements"
+        ),
+        "",
+    ]
+    lines += [
+        "| " + " | ".join(frame.columns) + " |",
+        "| " + " | ".join(["---"] * len(frame.columns)) + " |",
+    ]
     for _, row in frame.fillna("").iterrows():
         lines.append("| " + " | ".join(str(x) for x in row) + " |")
     (output / f"{prefix}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")

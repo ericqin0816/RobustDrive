@@ -9,7 +9,11 @@ def regression_metrics(target, prediction) -> dict:
     if not np.isfinite(y).all() or not np.isfinite(p).all():
         raise ValueError("Metrics require finite predictions and targets.")
     residual = p - y
-    mse = float(np.mean(residual ** 2))
-    return {"n": len(y), "mse": mse, "mae": float(np.mean(abs(residual))),
-            "rmse": float(np.sqrt(mse)),
-            "r2": float(r2_score(y, p)) if len(y) > 1 and np.var(y) > 1e-12 else None}
+    mse = float(np.mean(residual**2))
+    return {
+        "n": len(y),
+        "mse": mse,
+        "mae": float(np.mean(abs(residual))),
+        "rmse": float(np.sqrt(mse)),
+        "r2": float(r2_score(y, p)) if len(y) > 1 and np.var(y) > 1e-12 else None,
+    }

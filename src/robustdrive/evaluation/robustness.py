@@ -11,9 +11,19 @@ from robustdrive.evaluation.metrics import regression_metrics
 from robustdrive.evaluation.plots import robustness_plots
 from robustdrive.utils.logging import write_json
 
-CORRUPTIONS = ("brightness_down", "brightness_up", "contrast", "gaussian_blur",
-               "motion_blur", "gaussian_noise", "occlusion", "horizontal_shift",
-               "vertical_shift", "shadow", "color_shift")
+CORRUPTIONS = (
+    "brightness_down",
+    "brightness_up",
+    "contrast",
+    "gaussian_blur",
+    "motion_blur",
+    "gaussian_noise",
+    "occlusion",
+    "horizontal_shift",
+    "vertical_shift",
+    "shadow",
+    "color_shift",
+)
 
 
 def corruption_seed(seed: int, row_id: int, corruption: str, severity: int) -> int:
@@ -53,12 +63,13 @@ def corrupt(image: np.ndarray, name: str, severity: int, seed: int = 42) -> np.n
         # Fixed center-lower location isolates severity from random placement.
         bh, bw = max(1, int(h * (0.04 + 0.025 * s))), max(1, int(w * 0.07 * s))
         y, left = int(0.67 * h), (w - bw) // 2
-        x[y:y + bh, left:left + bw] = 0
+        x[y : y + bh, left : left + bw] = 0
     elif name in {"horizontal_shift", "vertical_shift"}:
         dx = round(w * 0.015 * s) if name == "horizontal_shift" else 0
         dy = round(h * 0.012 * s) if name == "vertical_shift" else 0
-        x = cv2.warpAffine(x, np.float32([[1, 0, dx], [0, 1, dy]]), (w, h),
-                           borderMode=cv2.BORDER_REFLECT_101)
+        x = cv2.warpAffine(
+            x, np.float32([[1, 0, dx], [0, 1, dy]]), (w, h), borderMode=cv2.BORDER_REFLECT_101
+        )
     elif name == "shadow":
         yy, xx = np.mgrid[:h, :w]
         x[xx < (w * 0.55 + (yy - h / 2) * 0.35)] *= 1 - 0.13 * s
@@ -79,21 +90,34 @@ def benchmark(run, names=CORRUPTIONS, severities=None) -> dict:
             frame = clean.copy() if level == 0 else run.predict(corruption=name, severity=level)
             frame["corruption"] = name
             metrics = regression_metrics(frame.target, frame.prediction)
-            rows.append({"corruption": name, "severity": level, **metrics,
-                         "delta_mae": metrics["mae"] - clean_metrics["mae"],
-                         "delta_rmse": metrics["rmse"] - clean_metrics["rmse"],
-                         "status": run.status})
+            rows.append(
+                {
+                    "corruption": name,
+                    "severity": level,
+                    **metrics,
+                    "delta_mae": metrics["mae"] - clean_metrics["mae"],
+                    "delta_rmse": metrics["rmse"] - clean_metrics["rmse"],
+                    "status": run.status,
+                }
+            )
             if level:
                 predictions.append(frame)
     summary = pd.DataFrame(rows)
     summary.to_csv(run.output / "robustness.csv", index=False)
-    pd.concat([clean, *predictions], ignore_index=True).to_csv(run.output / "robustness_predictions.csv", index=False)
+    pd.concat([clean, *predictions], ignore_index=True).to_csv(
+        run.output / "robustness_predictions.csv", index=False
+    )
     nonclean = summary[summary.severity > 0]
-    result = {**run.provenance, "split": "test", "clean": clean_metrics,
-              "corruptions": list(names), "severities": levels,
-              "mean_corrupted_mae": float(nonclean.mae.mean()) if len(nonclean) else None,
-              "mean_delta_mae": float(nonclean.delta_mae.mean()) if len(nonclean) else None,
-              "aggregation": "Unweighted mean across selected corruption/severity pairs with severity > 0; lower is better."}
+    result = {
+        **run.provenance,
+        "split": "test",
+        "clean": clean_metrics,
+        "corruptions": list(names),
+        "severities": levels,
+        "mean_corrupted_mae": float(nonclean.mae.mean()) if len(nonclean) else None,
+        "mean_delta_mae": float(nonclean.delta_mae.mean()) if len(nonclean) else None,
+        "aggregation": "Unweighted mean across selected corruption/severity pairs with severity > 0; lower is better.",
+    }
     write_json(run.output / "robustness.json", result)
     robustness_plots(summary, run.figures, run.status)
     return result

@@ -32,43 +32,82 @@ def autonomy_metrics(folder: str | Path, penalty_seconds: float = 6.0) -> dict:
             duration = end - start
             interventions = int((lap_events.event == "takeover").sum())
             failures = int(lap_events.event.isin(["off_track", "collision"]).sum())
-            laps.append({"lap_seconds": duration, "completed": event.event == "lap_complete",
-                         "unassisted": event.event == "lap_complete" and interventions == 0 and failures == 0,
-                         "interventions": interventions, "failure_events": failures,
-                         "penalty_autonomy_percent": max(0, 1 - interventions * penalty_seconds / duration) * 100 if duration > 0 else None})
+            laps.append(
+                {
+                    "lap_seconds": duration,
+                    "completed": event.event == "lap_complete",
+                    "unassisted": event.event == "lap_complete"
+                    and interventions == 0
+                    and failures == 0,
+                    "interventions": interventions,
+                    "failure_events": failures,
+                    "penalty_autonomy_percent": max(
+                        0, 1 - interventions * penalty_seconds / duration
+                    )
+                    * 100
+                    if duration > 0
+                    else None,
+                }
+            )
             start = None
-    duration = float(times[-1] - times[0])
+    end = max(
+        float(times[-1]), float(events.elapsed_seconds.max()) if len(events) else float(times[-1])
+    )
+    end_file = folder / "session_end.json"
+    if end_file.exists():
+        end = max(end, float(json.loads(end_file.read_text())["elapsed_seconds"]))
+    duration = end - float(times[0])
     manual_seconds, manual_start = 0.0, None
     for event in events.itertuples():
         if event.event == "takeover":
             manual_start = max(float(times[0]), float(event.elapsed_seconds))
         elif event.event == "resume" and manual_start is not None:
-            manual_seconds += max(0, min(float(times[-1]), float(event.elapsed_seconds)) - manual_start)
+            manual_seconds += max(0, min(end, float(event.elapsed_seconds)) - manual_start)
             manual_start = None
     if manual_start is not None:
-        manual_seconds += max(0, float(times[-1]) - manual_start)
+        manual_seconds += max(0, end - manual_start)
     changes = np.diff(telemetry.steering.to_numpy())
     dt = np.diff(times)
     rates = changes[dt > 0] / dt[dt > 0]
     terminal_laps = len(laps)
     attempts = terminal_laps + int(start is not None)
-    actual = metadata.get("source") == "udacity-live" and metadata.get("training_data_kind") == "real"
-    result = {"status": "RECORDED SIMULATOR RUN — HUMAN EVENT ANNOTATIONS" if actual else "SYNTHETIC/TEST LOG ONLY — PENDING REAL DATA",
-              "telemetry_frames": len(telemetry), "duration_seconds": duration,
-              "interventions": len(takeovers), "time_between_interventions_seconds": np.diff(takeovers).tolist(),
-              "mean_time_between_interventions_seconds": float(np.diff(takeovers).mean()) if len(takeovers) > 1 else None,
-              "off_track_events": int((events.event == "off_track").sum()),
-              "collision_events": int((events.event == "collision").sum()),
-              "failure_events": int(events.event.isin(["off_track", "collision"]).sum()),
-              "lap_attempts": attempts, "terminal_laps": terminal_laps, "unfinished_laps": int(start is not None),
-              "lap_completion_percent": 100 * sum(l["completed"] for l in laps) / attempts if attempts else None,
-              "unassisted_lap_completion_percent": 100 * sum(l["unassisted"] for l in laps) / attempts if attempts else None,
-              "penalty_seconds": penalty_seconds,
-              "penalty_autonomy_percent": max(0, 1 - len(takeovers) * penalty_seconds / duration) * 100 if duration > 0 else None,
-              "time_autonomy_percent": 100 * max(0, 1 - manual_seconds / duration) if duration > 0 else None,
-              "mean_absolute_steering_change": float(abs(changes).mean()),
-              "rms_steering_rate_per_second": float(np.sqrt(np.mean(rates ** 2))) if len(rates) else None,
-              "laps": laps,
-              "limitations": "Events are manual annotations. Multiple failure events may describe one incident. Unfinished laps count as incomplete; fractional distance completion is unavailable."}
+    actual = (
+        metadata.get("source") == "udacity-live" and metadata.get("training_data_kind") == "real"
+    )
+    result = {
+        "status": "RECORDED SIMULATOR RUN — HUMAN EVENT ANNOTATIONS"
+        if actual
+        else "SYNTHETIC/TEST LOG ONLY — PENDING REAL DATA",
+        "telemetry_frames": len(telemetry),
+        "duration_seconds": duration,
+        "interventions": len(takeovers),
+        "time_between_interventions_seconds": np.diff(takeovers).tolist(),
+        "mean_time_between_interventions_seconds": float(np.diff(takeovers).mean())
+        if len(takeovers) > 1
+        else None,
+        "off_track_events": int((events.event == "off_track").sum()),
+        "collision_events": int((events.event == "collision").sum()),
+        "failure_events": int(events.event.isin(["off_track", "collision"]).sum()),
+        "lap_attempts": attempts,
+        "terminal_laps": terminal_laps,
+        "unfinished_laps": int(start is not None),
+        "lap_completion_percent": 100 * sum(lap["completed"] for lap in laps) / attempts
+        if attempts
+        else None,
+        "unassisted_lap_completion_percent": 100 * sum(lap["unassisted"] for lap in laps) / attempts
+        if attempts
+        else None,
+        "penalty_seconds": penalty_seconds,
+        "penalty_autonomy_percent": max(0, 1 - len(takeovers) * penalty_seconds / duration) * 100
+        if duration > 0
+        else None,
+        "time_autonomy_percent": 100 * max(0, 1 - manual_seconds / duration)
+        if duration > 0
+        else None,
+        "mean_absolute_steering_change": float(abs(changes).mean()),
+        "rms_steering_rate_per_second": float(np.sqrt(np.mean(rates**2))) if len(rates) else None,
+        "laps": laps,
+        "limitations": "Events are manual annotations. Multiple failure events may describe one incident. Unfinished laps count as incomplete; fractional distance completion is unavailable.",
+    }
     write_json(folder / "autonomy.json", result)
     return result

@@ -37,8 +37,12 @@ def inspect_main() -> None:
     from robustdrive.data.dataset import load_log
     from robustdrive.evaluation.plots import steering_plot
 
-    parser = argparse.ArgumentParser(description="Validate driving logs and plot steering distribution.")
-    parser.add_argument("--data", default="data/raw", help="Directory containing driving_log.csv, or CSV path")
+    parser = argparse.ArgumentParser(
+        description="Validate driving logs and plot steering distribution."
+    )
+    parser.add_argument(
+        "--data", default="data/raw", help="Directory containing driving_log.csv, or CSV path"
+    )
     parser.add_argument("--image-root")
     parser.add_argument("--kind", choices=["real", "synthetic"], default="real")
     parser.add_argument("--output", default="reports/tables/dataset_inspection.json")
@@ -47,14 +51,30 @@ def inspect_main() -> None:
     log = load_log(data_path(args.data), args.image_root, args.kind)
     steering = np.array([r.steering for r in log.records])
     speed = np.array([r.speed for r in log.records if r.speed is not None])
+
     def distribution(values):
-        return {"count": len(values), "mean": float(values.mean()), "std": float(values.std()),
-                "min": float(values.min()), "max": float(values.max()),
-                "quantiles_5_50_95": np.quantile(values, [0.05, 0.5, 0.95]).tolist()} if len(values) else None
-    report = {**log.inspection, "status": result_status(log.kind), "fingerprint": log.fingerprint,
-              "steering_distribution": distribution(steering), "speed_distribution": distribution(speed),
-              "nearly_straight_definition": "abs(steering) < 0.05",
-              "nearly_straight_percent": float(100 * np.mean(abs(steering) < 0.05))}
+        return (
+            {
+                "count": len(values),
+                "mean": float(values.mean()),
+                "std": float(values.std()),
+                "min": float(values.min()),
+                "max": float(values.max()),
+                "quantiles_5_50_95": np.quantile(values, [0.05, 0.5, 0.95]).tolist(),
+            }
+            if len(values)
+            else None
+        )
+
+    report = {
+        **log.inspection,
+        "status": result_status(log.kind),
+        "fingerprint": log.fingerprint,
+        "steering_distribution": distribution(steering),
+        "speed_distribution": distribution(speed),
+        "nearly_straight_definition": "abs(steering) < 0.05",
+        "nearly_straight_percent": float(100 * np.mean(abs(steering) < 0.05)),
+    }
     write_json(args.output, report)
     steering_plot(steering, Path(args.figure_dir), report["status"])
     print_result(report)
@@ -64,9 +84,13 @@ def train_main() -> None:
     from robustdrive.config import load_config
     from robustdrive.training.trainer import train
 
-    parser = argparse.ArgumentParser(description="Train a steering CNN from scratch or resume latest.pt.")
+    parser = argparse.ArgumentParser(
+        description="Train a steering CNN from scratch or resume latest.pt."
+    )
     parser.add_argument("--config", default="configs/baseline.yaml")
-    parser.add_argument("--data", help="Override CSV location; original data order must be retained")
+    parser.add_argument(
+        "--data", help="Override CSV location; original data order must be retained"
+    )
     parser.add_argument("--image-root")
     parser.add_argument("--name", help="New experiment directory name")
     parser.add_argument("--epochs", type=int)
@@ -124,19 +148,39 @@ def uncertainty_main() -> None:
 
     parser = evaluation_args("MC dropout; validation-only cutoff; TEST failure/rejection metrics.")
     parser.add_argument("--mc-samples", type=int)
-    parser.add_argument("--error-threshold", type=float, help="Predeclare a high-error definition; do not tune on test")
-    parser.add_argument("--corruptions", nargs="+", choices=CORRUPTIONS,
-                        default=["brightness_down", "gaussian_blur", "gaussian_noise", "shadow"])
+    parser.add_argument(
+        "--error-threshold",
+        type=float,
+        help="Predeclare a high-error definition; do not tune on test",
+    )
+    parser.add_argument(
+        "--corruptions",
+        nargs="+",
+        choices=CORRUPTIONS,
+        default=["brightness_down", "gaussian_blur", "gaussian_noise", "shadow"],
+    )
     args = parser.parse_args()
-    print_result(evaluate_uncertainty(evaluation_run(args), args.corruptions, args.mc_samples, args.error_threshold))
+    print_result(
+        evaluate_uncertainty(
+            evaluation_run(args), args.corruptions, args.mc_samples, args.error_threshold
+        )
+    )
 
 
 def ablation_main() -> None:
     from robustdrive.evaluation.ablation import aggregate, run_ablations
 
-    parser = argparse.ArgumentParser(description="Aggregate existing runs; optionally train five controlled ablations.")
-    parser.add_argument("--train", action="store_true", help="Train missing ablations; reuse verified completed runs")
-    parser.add_argument("--smoke", action="store_true", help="Use synthetic sample data and two epochs")
+    parser = argparse.ArgumentParser(
+        description="Aggregate existing runs; optionally train five controlled ablations."
+    )
+    parser.add_argument(
+        "--train",
+        action="store_true",
+        help="Train missing ablations; reuse verified completed runs",
+    )
+    parser.add_argument(
+        "--smoke", action="store_true", help="Use synthetic sample data and two epochs"
+    )
     parser.add_argument("--kind", choices=["real", "synthetic"], default="real")
     parser.add_argument("--root", default="experiments/results")
     parser.add_argument("--output", default="reports/tables")
@@ -149,9 +193,16 @@ def ablation_main() -> None:
 
 def figures_main() -> None:
     from robustdrive.evaluation.ablation import aggregate
-    from robustdrive.evaluation.plots import history_plot, prediction_plots, robustness_plots, uncertainty_plots
+    from robustdrive.evaluation.plots import (
+        history_plot,
+        prediction_plots,
+        robustness_plots,
+        uncertainty_plots,
+    )
 
-    parser = argparse.ArgumentParser(description="Regenerate figures from saved measurements; never invent results.")
+    parser = argparse.ArgumentParser(
+        description="Regenerate figures from saved measurements; never invent results."
+    )
     parser.add_argument("--run", help="Experiment directory; omitted means all completed runs")
     args = parser.parse_args()
     folders = [Path(args.run)] if args.run else sorted(Path("experiments/results").glob("*"))
@@ -169,9 +220,13 @@ def figures_main() -> None:
         if (folder / "uncertainty.json").exists():
             info = json.loads((folder / "uncertainty.json").read_text(encoding="utf-8"))
             selection = pd.read_csv(folder / "selective_prediction.csv")
-            uncertainty_plots(pd.read_csv(folder / "uncertainty_predictions.csv"),
-                              selection[selection.condition.isin(["clean", "pooled"])], figures, status,
-                              info["error_threshold"])
+            uncertainty_plots(
+                pd.read_csv(folder / "uncertainty_predictions.csv"),
+                selection[selection.condition.isin(["clean", "pooled"])],
+                figures,
+                status,
+                info["error_threshold"],
+            )
         print(f"Figures: {figures} ({status})")
     aggregate(kind="real")
     aggregate(kind="synthetic")
@@ -184,29 +239,51 @@ def drive_main() -> None:
     from robustdrive.simulator.interface import DriveSession, NeuralSteering
     from robustdrive.simulator.udacity import create_app
 
-    parser = argparse.ArgumentParser(description="Connect trained steering to Udacity on localhost:4567.")
+    parser = argparse.ArgumentParser(
+        description="Connect trained steering to Udacity on localhost:4567."
+    )
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--output", required=True, help="New directory for this drive run")
     parser.add_argument("--target-speed", type=float, default=12.0, help="mph; begin slowly")
     parser.add_argument("--kp", type=float, default=0.08)
     parser.add_argument("--max-throttle", type=float, default=0.3)
     parser.add_argument("--port", type=int, default=4567)
-    parser.add_argument("--mc-samples", type=int, default=0, help="0 deterministic, >=2 for dropout checkpoint")
-    parser.add_argument("--uncertainty-report", help="uncertainty.json fitted using this checkpoint's validation data")
+    parser.add_argument(
+        "--mc-samples", type=int, default=0, help="0 deterministic, >=2 for dropout checkpoint"
+    )
+    parser.add_argument(
+        "--uncertainty-report",
+        help="uncertainty.json fitted using this checkpoint's validation data",
+    )
     parser.add_argument("--record-frames", action="store_true")
-    parser.add_argument("--allow-synthetic", action="store_true", help="Protocol tests ONLY; cannot substantiate driving claims")
+    parser.add_argument(
+        "--allow-synthetic",
+        action="store_true",
+        help="Protocol tests ONLY; cannot substantiate driving claims",
+    )
     args = parser.parse_args()
     policy = NeuralSteering(args.checkpoint, args.mc_samples)
     if policy.provenance["training_data_kind"] == "synthetic" and not args.allow_synthetic:
-        parser.error("Synthetic checkpoint is for software tests; collect real data before driving.")
+        parser.error(
+            "Synthetic checkpoint is for software tests; collect real data before driving."
+        )
     threshold = None
     if args.uncertainty_report:
         report = json.loads(Path(args.uncertainty_report).read_text(encoding="utf-8"))
-        if report["checkpoint_sha256"] != policy.provenance["checkpoint_sha256"] or report["mc_samples"] != args.mc_samples:
+        if (
+            report["checkpoint_sha256"] != policy.provenance["checkpoint_sha256"]
+            or report["mc_samples"] != args.mc_samples
+        ):
             parser.error("Uncertainty report must match this checkpoint and MC pass count.")
         threshold = report["uncertainty_threshold"]
-    session = DriveSession(policy, args.output, SpeedController(args.target_speed, args.kp, args.max_throttle),
-                           {**policy.provenance, "source": "udacity-live"}, threshold, args.record_frames)
+    session = DriveSession(
+        policy,
+        args.output,
+        SpeedController(args.target_speed, args.kp, args.max_throttle),
+        {**policy.provenance, "source": "udacity-live"},
+        threshold,
+        args.record_frames,
+    )
     print("Annotate in a second terminal with scripts/mark_event.py. Risk flags are observational.")
     print("Mark lap_start, takeovers/resumes, off_track/collision and lap_complete or lap_abort.")
     try:
@@ -221,13 +298,19 @@ def mark_main() -> None:
 
     from robustdrive.simulator.interface import EVENTS
 
-    parser = argparse.ArgumentParser(description="Timestamp a human-observed event in a running drive session.")
+    parser = argparse.ArgumentParser(
+        description="Timestamp a human-observed event in a running drive session."
+    )
     parser.add_argument("event", choices=EVENTS)
     parser.add_argument("--note", default="")
     parser.add_argument("--port", type=int, default=4567)
     args = parser.parse_args()
     payload = json.dumps({"event": args.event, "note": args.note}).encode()
-    request = Request(f"http://127.0.0.1:{args.port}/event", data=payload, headers={"Content-Type": "application/json"})
+    request = Request(
+        f"http://127.0.0.1:{args.port}/event",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+    )
     try:
         with urlopen(request, timeout=10) as response:
             print(response.read().decode())
@@ -238,7 +321,9 @@ def mark_main() -> None:
 def autonomy_main() -> None:
     from robustdrive.evaluation.autonomy import autonomy_metrics
 
-    parser = argparse.ArgumentParser(description="Calculate autonomous-run metrics from real logs and manual annotations.")
+    parser = argparse.ArgumentParser(
+        description="Calculate autonomous-run metrics from real logs and manual annotations."
+    )
     parser.add_argument("--log-dir", required=True)
     parser.add_argument("--takeover-penalty", type=float, default=6.0)
     args = parser.parse_args()

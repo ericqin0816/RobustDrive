@@ -11,9 +11,17 @@ import pandas as pd
 
 from robustdrive.data.preprocessing import read_rgb
 
-plt.rcParams.update({"figure.dpi": 130, "savefig.dpi": 200, "font.size": 10,
-                     "axes.spines.top": False, "axes.spines.right": False,
-                     "axes.grid": True, "grid.alpha": 0.18})
+plt.rcParams.update(
+    {
+        "figure.dpi": 130,
+        "savefig.dpi": 200,
+        "font.size": 10,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "axes.grid": True,
+        "grid.alpha": 0.18,
+    }
+)
 
 
 def save_figure(fig, path: Path, status: str) -> None:
@@ -37,7 +45,9 @@ def history_plot(history: pd.DataFrame, folder: Path, status: str) -> None:
 def steering_plot(values, folder: Path, status: str) -> None:
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.hist(values, bins=41, color="#2d6978")
-    ax.set(xlabel="Steering (negative = left)", ylabel="Frames", title="Recorded steering distribution")
+    ax.set(
+        xlabel="Steering (negative = left)", ylabel="Frames", title="Recorded steering distribution"
+    )
     save_figure(fig, folder / "steering_distribution.png", status)
 
 
@@ -47,7 +57,9 @@ def prediction_plots(frame: pd.DataFrame, folder: Path, status: str) -> None:
     ax.scatter(y, p, s=12, alpha=0.5, color="#2d6978")
     bounds = [min(y.min(), p.min()), max(y.max(), p.max())]
     ax.plot(bounds, bounds, "--", color="gray")
-    ax.set(xlabel="Recorded steering", ylabel="Predicted steering", title="Test steering predictions")
+    ax.set(
+        xlabel="Recorded steering", ylabel="Predicted steering", title="Test steering predictions"
+    )
     save_figure(fig, folder / "predicted_vs_actual.png", status)
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.hist(p - y, bins=min(40, max(5, len(y) // 3)), color="#2d6978")
@@ -55,8 +67,11 @@ def prediction_plots(frame: pd.DataFrame, folder: Path, status: str) -> None:
     save_figure(fig, folder / "residuals.png", status)
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.scatter(abs(y), abs(p - y), s=12, alpha=0.5, color="#2d6978")
-    ax.set(xlabel="Absolute recorded steering", ylabel="Absolute steering error",
-           title="Error versus steering magnitude")
+    ax.set(
+        xlabel="Absolute recorded steering",
+        ylabel="Absolute steering error",
+        title="Error versus steering magnitude",
+    )
     save_figure(fig, folder / "error_vs_steering.png", status)
     example_grid(frame.head(9), folder / "sample_predictions.png", status)
 
@@ -67,7 +82,9 @@ def example_grid(frame: pd.DataFrame, path: Path, status: str) -> None:
     from robustdrive.evaluation.robustness import corrupt
 
     frame = frame.head(9)
-    fig, axes = plt.subplots(int(np.ceil(len(frame) / 3)), 3, figsize=(11, 3 * np.ceil(len(frame) / 3)), squeeze=False)
+    fig, axes = plt.subplots(
+        int(np.ceil(len(frame) / 3)), 3, figsize=(11, 3 * np.ceil(len(frame) / 3)), squeeze=False
+    )
     for ax in axes.flat:
         ax.axis("off")
     for ax, (_, row) in zip(axes.flat, frame.iterrows()):
@@ -77,9 +94,12 @@ def example_grid(frame: pd.DataFrame, path: Path, status: str) -> None:
             image = corrupt(image, condition, severity, int(row.corruption_seed))
         ax.imshow(image)
         uncertainty = row.get("uncertainty", np.nan)
-        ax.set_title(f"target {row.target:+.3f} | pred {row.prediction:+.3f}\n"
-                     f"error {abs(row.target-row.prediction):.3f} | std {uncertainty:.3f}\n"
-                     f"{condition}, severity {severity}", fontsize=8)
+        ax.set_title(
+            f"target {row.target:+.3f} | pred {row.prediction:+.3f}\n"
+            f"error {abs(row.target - row.prediction):.3f} | std {uncertainty:.3f}\n"
+            f"{condition}, severity {severity}",
+            fontsize=8,
+        )
     save_figure(fig, path, status)
 
 
@@ -91,23 +111,32 @@ def robustness_plots(frame: pd.DataFrame, folder: Path, status: str) -> None:
         axis.plot(group.severity, group.mae, marker="o", color="#2d6978")
         axis.set(xlabel="Severity", ylabel="Steering MAE", title=name.replace("_", " "))
         save_figure(single, folder / f"robustness_{name}.png", status)
-    ax.set(xlabel="Severity (0 = clean)", ylabel="Steering MAE", title="Controlled visual robustness")
+    ax.set(
+        xlabel="Severity (0 = clean)", ylabel="Steering MAE", title="Controlled visual robustness"
+    )
     ax.legend(bbox_to_anchor=(1.02, 1), loc="upper left", fontsize=8)
     save_figure(fig, folder / "robustness_summary.png", status)
 
 
-def uncertainty_plots(frame: pd.DataFrame, selective: pd.DataFrame, folder: Path,
-                      status: str, error_threshold: float) -> None:
+def uncertainty_plots(
+    frame: pd.DataFrame, selective: pd.DataFrame, folder: Path, status: str, error_threshold: float
+) -> None:
     from sklearn.metrics import precision_recall_curve, roc_curve
 
     error = abs(frame.target - frame.prediction)
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.scatter(frame.uncertainty, error, s=12, alpha=0.4, color="#2d6978")
-    ax.set(xlabel="MC steering standard deviation", ylabel="Absolute steering error",
-           title="Does uncertainty track error?")
+    ax.set(
+        xlabel="MC steering standard deviation",
+        ylabel="Absolute steering error",
+        title="Does uncertainty track error?",
+    )
     save_figure(fig, folder / "uncertainty_vs_error.png", status)
     fig, ax = plt.subplots(figsize=(6, 4))
-    for label, part in (("Clean", frame[frame.severity == 0]), ("Corrupted", frame[frame.severity > 0])):
+    for label, part in (
+        ("Clean", frame[frame.severity == 0]),
+        ("Corrupted", frame[frame.severity > 0]),
+    ):
         if len(part):
             ax.hist(part.uncertainty, bins=25, alpha=0.5, label=label, density=True)
     ax.set(xlabel="MC steering standard deviation", ylabel="Density", title="Prediction dispersion")
@@ -117,14 +146,20 @@ def uncertainty_plots(frame: pd.DataFrame, selective: pd.DataFrame, folder: Path
     for name, part in frame[frame.severity > 0].groupby("corruption"):
         group = part.groupby("severity").uncertainty.mean()
         ax.plot(group.index, group.values, marker="o", label=name)
-    ax.set(xlabel="Corruption severity", ylabel="Mean MC standard deviation", title="Uncertainty under shift")
+    ax.set(
+        xlabel="Corruption severity",
+        ylabel="Mean MC standard deviation",
+        title="Uncertainty under shift",
+    )
     if ax.lines:
         ax.legend(fontsize=8)
     save_figure(fig, folder / "uncertainty_vs_severity.png", status)
     fig, ax = plt.subplots(figsize=(7, 4))
     for name, group in selective.groupby("condition"):
         ax.plot(100 * group.actual_coverage, group.mae, marker="o", label=name)
-    ax.set(xlabel="Accepted coverage (%)", ylabel="Accepted steering MAE", title="Selective prediction")
+    ax.set(
+        xlabel="Accepted coverage (%)", ylabel="Accepted steering MAE", title="Selective prediction"
+    )
     ax.legend(fontsize=7, bbox_to_anchor=(1.02, 1), loc="upper left")
     save_figure(fig, folder / "coverage_vs_error.png", status)
     # Only plot valid discrimination curves. A single class has no ROC-AUC.

@@ -1,0 +1,48 @@
+{
+  "recording_id": "play_438c62ffaa42",
+  "training_source_commit": "8566dbe5ef3950ee8a30d445bb9713fe1b64c97e",
+  "training_source_dirty": false,
+  "source_fingerprint": "438c62ffaa4250a8252f1f1abaebc004af8bf8e42016b3bd76411a477c1d12c0",
+  "prepared_fingerprint": "4dba1907e0e2a18b162f211e23f0acd98c032d0f2cdccd20d3e1a925f7209518",
+  "source_rows": 9463,
+  "moving_rows": 9459,
+  "excluded_stationary_or_missing_center": 4,
+  "split_counts": {
+    "train": 6606,
+    "validation": 1389,
+    "test": 1404,
+    "discarded": 60
+  },
+  "checkpoint_sha256": {
+    "baseline": "13b3fb09063fde3c6ad570e25e591d6531bd34d1217ed4c04a6356fb20dee4ea",
+    "augmented": "395d7b8375e5867164a48b41bf98575db3bcd6ef5c0bfc1fde94f18ef8b0ba01",
+    "uncertainty": "8d7506c62c10287b3b9032763389b68b3c2dfea4c6c1c77a9af532ca9e99344e"
+  },
+  "source_artifact_sha256": {
+    "experiments/results/play_438c62ffaa42_baseline/config.yaml": "651ad60e33a084ff62092eeedc23f88207fd34ed014b317470aa2c75966a4d47",
+    "experiments/results/play_438c62ffaa42_baseline/metadata.json": "8b184d6f0b3baae67140af1a8d2bc7960b221a656ea683a8a7e646f6a6006964",
+    "experiments/results/play_438c62ffaa42_baseline/metrics.json": "f5337da706e279814f5e0578d2115a49f4a79c28d10658c6fe86da6629d90a3d",
+    "experiments/results/play_438c62ffaa42_baseline/evaluation.json": "27a7788395896e67bec333209fb2c145b6c964f22412a8149a0721d91b01ba62",
+    "experiments/results/play_438c62ffaa42_baseline/robustness.json": "fb1ada5f3034c064b06810117ca46258c59f2397071935342099cc3f1e775c63",
+    "experiments/results/play_438c62ffaa42_baseline/robustness.csv": "60e53f9107f0922efe4a6c94eeda7350426237435f0c7f0f39efab36c1728863",
+    "experiments/results/play_438c62ffaa42_baseline/history.csv": "3140b8e98678b84669dddf83c61f0001854ee428116a0dbfd74626c7e90f390f",
+    "experiments/results/play_438c62ffaa42_augmented/config.yaml": "b4594e00d074a7fb3c222ede675df14d33e24b87ec76509c66f28a020178a365",
+    "experiments/results/play_438c62ffaa42_augmented/metadata.json": "0327c926e2cb89cc4966ec7990b57db47432daabffe7659af95a1bff68259d31",
+    "experiments/results/play_438c62ffaa42_augmented/metrics.json": "6d518434cf474aab6acaac8a6242be2df239fa61413de150b5edf5b997e18380",
+    "experiments/results/play_438c62ffaa42_augmented/evaluation.json": "aff88c7ed435e96104372cd084bbfaf07502c397d6b6c3c44620fc19fb054372",
+    "experiments/results/play_438c62ffaa42_augmented/robustness.json": "8a0555aeb9ef54a18945579a16e9810305e12d77258a349f6252c487237b9357",
+    "experiments/results/play_438c62ffaa42_augmented/robustness.csv": "d1328cb234c4880154a9bf6959fc9947110589f11494234a9a9abb3a84cba69d",
+    "experiments/results/play_438c62ffaa42_augmented/history.csv": "b23173ae53946bb7703e5d84e6900abb0eb7f1f76b242c99a7e6b224acdc2cdf",
+    "experiments/results/play_438c62ffaa42_uncertainty/config.yaml": "875c3ccb7ddc85323d8c5f1e19187eb9a09f1f2dcbe5eb110a0588be6496b129",
+    "experiments/results/play_438c62ffaa42_uncertainty/metadata.json": "0073d08ae4a5b14600c10492f1e87843b72145054cc4d7c1e7f59cd6cc330c1b",
+    "experiments/results/play_438c62ffaa42_uncertainty/metrics.json": "f0e77b401ff1a5e0cf596f3927dc7db680ab4556cca0b78c9c50a0c81c580eba",
+    "experiments/results/play_438c62ffaa42_uncertainty/evaluation.json": "6a265e811c0152902ff1862975f5dc39dff288b50b679a5ea34fab38a40c7815",
+    "experiments/results/play_438c62ffaa42_uncertainty/robustness.json": "d2e81419b263fc26fbdb1fb432b4394ec75b017f5a38f0d7f2524673e1d623eb",
+    "experiments/results/play_438c62ffaa42_uncertainty/robustness.csv": "5cde3f22278fb511bb269991606168abc94cdf3634c5b250ab4ae1ee2c1e32e8",
+    "experiments/results/play_438c62ffaa42_uncertainty/history.csv": "34312c5d2df6066d2bb2b109f9058ec223e014f5fff7300d2c9672f6cd1fbbc0",
+    "experiments/results/play_438c62ffaa42_uncertainty/uncertainty.json": "f6b996917213bceeb3040e7dcc07fdeab87e76aedc16317570422e2faab293b0",
+    "experiments/results/play_438c62ffaa42_uncertainty/selective_prediction.csv": "fdb3cc7ece448e642ad4091873f5053f0c604947c66882d9419d9a082e7b0e86",
+    "experiments/results/play_438c62ffaa42_uncertainty/uncertainty_by_condition.csv": "6f5f42bbb26c35116c345a248da07ea5edf536bae41980a5959d44bfe521f9d4"
+  },
+  "scope": "One personal simulator recording, seed 42. Offline results only. Raw images and checkpoints stay local."
+}

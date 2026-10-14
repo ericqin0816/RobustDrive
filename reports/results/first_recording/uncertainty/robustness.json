@@ -1,0 +1,38 @@
+{
+  "status": "REAL DATA \u2014 OFFLINE EVALUATION; CLOSED-LOOP CLAIMS REQUIRE DRIVE LOGS",
+  "data_kind": "real",
+  "data_fingerprint": "4dba1907e0e2a18b162f211e23f0acd98c032d0f2cdccd20d3e1a925f7209518",
+  "checkpoint_sha256": "8d7506c62c10287b3b9032763389b68b3c2dfea4c6c1c77a9af532ca9e99344e",
+  "split": "test",
+  "clean": {
+    "n": 1404,
+    "mse": 0.02136393447241103,
+    "mae": 0.10000032503460819,
+    "rmse": 0.14616406696726467,
+    "r2": -0.02330911082518794
+  },
+  "corruptions": [
+    "brightness_down",
+    "brightness_up",
+    "contrast",
+    "gaussian_blur",
+    "motion_blur",
+    "gaussian_noise",
+    "occlusion",
+    "horizontal_shift",
+    "vertical_shift",
+    "shadow",
+    "color_shift"
+  ],
+  "severities": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "mean_corrupted_mae": 0.11675431048647171,
+  "mean_delta_mae": 0.01675398545186354,
+  "aggregation": "Unweighted mean across selected corruption/severity pairs with severity > 0; lower is better."
+}

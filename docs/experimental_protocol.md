@@ -1,7 +1,10 @@
 # Experimental protocol
 
-**Current scientific status: PENDING REAL DATA.** Freeze the protocol before
-reading test results. The software can run it; the experiments still need data.
+**Current scientific status: first recording evaluated.** The original protocol
+preceded the first real-data analysis; its splits, corruption definitions, error
+threshold, and uncertainty quantile were retained. See the
+[research report](../reports/research_report.md). Future tuning needs new held-out
+data; the first test set has now been inspected.
 
 ## A–C: learn steering and test the closed loop
 
@@ -131,6 +134,10 @@ failure annotations. No percentage of track distance is inferred from camera fra
 Record the penalty (default 6 seconds) and evaluation duration. A lap finish with
 a takeover differs from an unassisted finish. Off-track and collision event counts
 may describe the same incident; do not relabel them as independent failures.
+An event-free log has no autonomy percentage: zero recorded events do not prove
+there were no failures or interventions. Even nonempty logs require a complete
+annotation process. Saved camera frames may be rate-limited; inspect recording
+metadata and do not assume one saved image per telemetry row.
 
 ## What is needed for the stronger early-warning claim
 

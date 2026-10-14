@@ -11,9 +11,11 @@ RobustDrive trains an end-to-end vision model to steer a simulated vehicle from
 camera images, then studies its errors under visual distribution shift and whether
 uncertainty can flag unreliable steering predictions.
 
-**Research status: PENDING REAL DATA.** The software pipeline has been exercised
-with synthetic images. No real simulator dataset, autonomous lap, robustness
-finding, or uncertainty claim is reported here. See [verification](reports/verification.md).
+**Research status: first personal recording evaluated.** Three models were trained
+on 9,459 usable simulator rows. The center-only baseline performed best among
+these models; MC dropout did not reliably identify high-error predictions.
+Live simulator control works, but annotated lap success remains unmeasured.
+See [measured results](reports/research_report.md) and [software verification](reports/verification.md).
 
 **Windows shortcut:** [Play & Learn](docs/play.md) lets you record a drive, stop
 recording, and close the game to start training and analysis automatically.
@@ -173,6 +175,12 @@ Also available: `collision` and `lap_abort`. `takeover` pauses network steering
 responses; use the simulator's controls to physically take over, then `resume`.
 The annotation command does not press controls or apply brakes.
 
+The Windows launcher exposes 12/15/20/25/30 mph targets before **Watch my model**.
+Speed is controlled separately from learned steering. The proportional controller
+can settle below its target (the first 12 mph trial settled near 10.85 mph).
+Saved camera images default to at most 5 fps and 10,000 images per run; telemetry
+continues for every response. Override with `--record-fps` and `--max-recorded-frames`.
+
 Logs include prediction, commanded steering, speed, throttle, uncertainty, risk
 flags, frame IDs, and inference latency. Metrics include annotated lap completion,
 unassisted laps, interventions, time between interventions, failures, lap time,
@@ -180,8 +188,9 @@ mean absolute steering change, and RMS steering rate. The penalty score is
 `100 × max(0, 1 − takeovers × penalty_seconds / duration_seconds)`; separately,
 time autonomy uses takeover/resume durations. Events are human annotations.
 
-The adapter listens on `127.0.0.1:4567`. Actual Unity compatibility and autonomous
-laps remain pending personal testing; see [the simulator guide](docs/simulator.md).
+The adapter listens on `127.0.0.1:4567`. Unity handshake and steering were observed
+in the first live trial. Lap completion still needs annotation; a log with no
+events receives no autonomy score. See [the simulator guide](docs/simulator.md).
 
 ## 11. Robustness benchmark
 
@@ -233,13 +242,13 @@ must be checked before interpreting closed-loop results.
 
 | Stage | Experiment | Research status |
 |---|---|---|
-| A | Center-camera behavioral cloning | PENDING REAL DATA |
-| B | Recovery cameras and augmentation | PENDING REAL DATA |
-| C | Autonomous simulator laps | PENDING REAL DATA |
-| D | Visual robustness | PENDING REAL DATA |
-| E | MC dropout uncertainty | PENDING REAL DATA |
-| F | Error detection and rejection | PENDING REAL DATA |
-| G | Ablation and failure analysis | PENDING REAL DATA |
+| A | Center-camera behavioral cloning | First recording complete |
+| B | Recovery cameras and augmentation | First recording complete |
+| C | Autonomous simulator laps | Live control verified; annotated laps pending |
+| D | Visual robustness | 11 corruptions × 5 nonzero severities evaluated |
+| E | MC dropout uncertainty | 20-pass analysis complete |
+| F | Error detection and rejection | Negative result on first recording |
+| G | Ablation and failure analysis | Three variants reviewed; component ablations pending |
 
 ```bash
 python scripts/run_ablation.py
@@ -255,13 +264,32 @@ separate. See [experiment outputs](experiments/README.md).
 
 ## 15. Results
 
-**PENDING REAL DATA.** No real steering MAE, lap-completion percentage, robustness
-score, or uncertainty finding is available. Smoke numbers are software-test
-artifacts and do not belong in a resume or research-results table.
+One personal recording, seed 42, shared chronological split, 1,404 held-out center
+frames. Errors are normalized steering units. These are offline measurements.
+
+| Model | Clean MAE | Clean RMSE | Mean corrupted MAE |
+|---|---:|---:|---:|
+| Center-only baseline | 0.07891 | 0.12519 | 0.10934 |
+| Recovery + visual augmentation | 0.10306 | 0.14813 | 0.11065 |
+| Augmentation + dropout, deterministic | 0.10000 | 0.14616 | 0.11675 |
+
+Clean MC-dropout high-error detection had ROC-AUC **0.2837**, precision **6.74%**,
+and recall **4.80%** at the validation-derived threshold. Rejecting the most
+uncertain half **increased** MAE from 0.09783 to 0.13040. This is not a validated
+failure warning. An exploratory always-zero steering reference achieved lower
+MAE (0.05502) but worse RMSE (0.14903) than the learned baseline, illustrating
+the strongly imbalanced labels and why MAE alone does not establish useful driving.
+
+![First recording offline comparison](reports/results/first_recording/overview.png)
+
+[Research report](reports/research_report.md) ·
+[Frozen numerical evidence and hashes](reports/results/first_recording/manifest.json).
+No annotated lap-completion or early-warning result is claimed.
 
 Generated CSV/Markdown tables live in `reports/tables/`; labeled PNG and vector
 PDF figures live in `reports/figures/<run>/`. Data, checkpoints, and generated
-outputs are excluded from Git.
+outputs are excluded from Git. A small, reviewed aggregate snapshot is published
+under `reports/results/first_recording/`; camera data and checkpoints remain local.
 
 ## 16. Failure cases
 
@@ -333,7 +361,7 @@ RobustDrive/
 
 ## 20. Limitations
 
-- No personal driving data or real autonomous evaluation yet.
+- One personal recording and an unannotated live trial; no verified lap-success rate.
 - Offline steering error cannot establish closed-loop stability or early warning.
 - MC dropout may be confidently wrong; uncertainty is uncalibrated.
 - Camera corrections and translated-image labels are approximate.
@@ -361,7 +389,8 @@ CARLA, Donkey Car deployment, and sim-to-real transfer. None is implemented in V
 
 Behavioral cloning, the architectural inspiration, and MC dropout come from prior
 work. RobustDrive contributes an independent modern implementation and an auditable
-framework for the user's future experiments. No new scientific finding is claimed.
+framework for personal experiments. The first-session results above are a limited
+empirical evaluation, not a claim of a new method or general driving reliability.
 
 Portfolio drafts: [website summary](reports/project_summary.md) ·
 [resume templates](reports/resume_bullets.md) · [research report](reports/research_report.md).

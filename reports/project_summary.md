@@ -36,16 +36,24 @@ Actual advance warning of road departures remains a separate empirical question.
 
 ## Experiments
 
-Planned real experiments compare center-only training, recovery/augmentation,
-autonomous laps, corruption severity, and error rejection by uncertainty.
+The first real experiments compare center-only training, recovery/augmentation,
+corruption severity, and error rejection by uncertainty. Annotated autonomous laps
+remain the next step.
 Chronological splits, saved configurations, fingerprints, and labeled outputs
 make the analysis auditable.
 
 ## Results
 
-**PENDING REAL DATA.** Software tests and synthetic smoke training/evaluation have
-run. No real simulator success rate, steering metric, or uncertainty finding is
-claimed. Replace this paragraph only with measurements traceable to saved runs.
+Trained three models on one personal recording with 9,459 usable rows. The
+center-only baseline achieved normalized steering MAE 0.07891 and RMSE 0.12519
+on 1,404 chronological test frames, outperforming the two augmented variants.
+Its mean MAE across 55 corrupted conditions was 0.10934.
+
+MC dropout did not reliably flag high-error predictions: clean ROC-AUC was 0.2837,
+and rejecting the most uncertain half increased MAE. This negative result is
+documented alongside label imbalance and limited data diversity. Real simulator
+control was observed at approximately 10.85 mph; lap completion remains unmeasured.
+See the [research report and evidence](research_report.md).
 
 ## What I learned
 
@@ -56,7 +64,7 @@ low for incorrect predictions. Write the final reflection in your own words.
 
 ## Future work
 
-Collect personal driving/recovery data, evaluate matched autonomous laps, analyze
+Collect independent driving/recovery data, evaluate matched autonomous laps, analyze
 confidently wrong cases, and test prospective warning lead time. Temporal models,
 ensembles, calibration, and richer simulators come after the baseline is validated.
 

@@ -1,0 +1,26 @@
+{
+  "run": "drive_play_20261013_233757",
+  "checkpoint_sha256": "13b3fb09063fde3c6ad570e25e591d6531bd34d1217ed4c04a6356fb20dee4ea",
+  "target_speed_mph": 12.0,
+  "kp": 0.08,
+  "max_throttle": 0.3,
+  "first_telemetry_utc": "2026-10-14T04:39:40.396522+00:00",
+  "last_telemetry_utc": "2026-10-14T04:48:25.295829+00:00",
+  "telemetry_span_seconds": 524.9539999999979,
+  "telemetry_frames": 65503,
+  "event_annotations": 0,
+  "speed_mean_mph": 10.757202254858557,
+  "speed_median_mph": 10.8495,
+  "speed_max_mph": 10.8835,
+  "inference_median_ms": 1.615799992578104,
+  "inference_p95_ms": 2.0300900039728726,
+  "lap_completion_percent": null,
+  "session_end_file_present": false,
+  "ending": "Simulator closed with Alt+F4 after visual review; old launcher then terminated its server. No fabricated session-end timestamp.",
+  "limitations": "Camera samples and one live GUI view reviewed, not a continuous lap audit. No event annotations. Frame count includes repeated simulator frames; speed does not establish distance or laps.",
+  "source_sha256": {
+    "telemetry.csv": "1507a4fa2f4647dd96620adc0f687c55934f012b4fc24903901bcfd23bc95a4a",
+    "events.csv": "c540b47fab5b796d7a6f8c99b328afc0b7010ff452525d66ebfb1a2782ce7f74",
+    "drive_metadata.json": "cac27088a7d9ff1dfa0c691ee03c92e57e9c0008e3729b827d0ee78b943abe83"
+  }
+}

@@ -1,16 +1,23 @@
 import asyncio
 import base64
+import contextlib
 import json
 
 import numpy as np
 import pandas as pd
 import pytest
-from aiohttp.test_utils import TestClient, TestServer
+from aiohttp import ClientConnectorError, ClientSession, WSMsgType
+from aiohttp.test_utils import TestClient, TestServer, unused_port
 
 from robustdrive.evaluation.autonomy import autonomy_metrics
 from robustdrive.simulator.controller import SpeedController
 from robustdrive.simulator.interface import DriveSession
-from robustdrive.simulator.udacity import create_app, decode_telemetry, encode_event
+from robustdrive.simulator.udacity import (
+    create_app,
+    decode_telemetry,
+    encode_event,
+    run_until_stopped,
+)
 from robustdrive.utils.logging import write_json
 
 
@@ -29,6 +36,91 @@ def test_controller_clamps_and_validates():
         controller(float("nan"))
     with pytest.raises(ValueError):
         SpeedController(target_speed=-5)
+
+
+def test_higher_target_is_not_limited_to_default_speed():
+    controller = SpeedController(target_speed=30)
+    assert controller(12) == 0.3
+    assert controller(29) == pytest.approx(0.08)
+    assert controller(30) == 0
+
+
+def test_recording_rate_and_frame_limit_preserve_all_telemetry(tmp_path, monkeypatch):
+    clock = [100.0]
+    monkeypatch.setattr("robustdrive.simulator.interface.time.monotonic", lambda: clock[0])
+    session = DriveSession(
+        TestPolicy(),
+        tmp_path / "drive",
+        SpeedController(),
+        {},
+        record_frames=True,
+        record_fps=2,
+        max_recorded_frames=2,
+    )
+    try:
+        rows = []
+        for elapsed in (0, 0.1, 0.5, 1.0, 1.5):
+            clock[0] = 100 + elapsed
+            rows.append(session.step(np.zeros((80, 120, 3), dtype=np.uint8), 10))
+    finally:
+        session.close()
+    assert [bool(row["image"]) for row in rows] == [True, False, True, False, False]
+    assert len(list((session.output / "frames").glob("*.jpg"))) == 2
+    assert len(pd.read_csv(session.output / "telemetry.csv")) == 5
+    assert json.loads((session.output / "session_end.json").read_text())["frame_limit_reached"]
+
+
+def test_unannotated_real_drive_cannot_claim_perfect_autonomy(tmp_path):
+    pd.DataFrame({"elapsed_seconds": [0, 10], "steering": [0, 0.1]}).to_csv(
+        tmp_path / "telemetry.csv", index=False
+    )
+    pd.DataFrame(columns=["elapsed_seconds", "event"]).to_csv(tmp_path / "events.csv", index=False)
+    write_json(
+        tmp_path / "drive_metadata.json", {"source": "udacity-live", "training_data_kind": "real"}
+    )
+    result = autonomy_metrics(tmp_path)
+    assert "UNANNOTATED" in result["status"]
+    assert result["annotation_count"] == 0
+    assert result["time_autonomy_percent"] is None
+    assert result["penalty_autonomy_percent"] is None
+    assert result["lap_completion_percent"] is None
+
+
+def test_launcher_stop_file_closes_live_connection(tmp_path):
+    session = DriveSession(TestPolicy(), tmp_path / "drive", SpeedController(30), {})
+    stop_file = tmp_path / "stop.request"
+
+    async def exchange():
+        port = unused_port()
+        server = asyncio.create_task(run_until_stopped(session, port, stop_file))
+        try:
+            async with ClientSession() as client:
+                for _ in range(100):
+                    try:
+                        async with client.get(f"http://127.0.0.1:{port}/") as response:
+                            assert (await response.json())["target_speed_mph"] == 30
+                        break
+                    except ClientConnectorError:
+                        await asyncio.sleep(0.01)
+                else:
+                    pytest.fail("Server did not become ready")
+                ws = await client.ws_connect(
+                    f"http://127.0.0.1:{port}/socket.io/?EIO=4&transport=websocket"
+                )
+                await ws.receive_str()
+                await ws.receive_str()
+                stop_file.touch()
+                assert (await ws.receive(timeout=3)).type == WSMsgType.CLOSE
+                await asyncio.wait_for(server, timeout=3)
+        finally:
+            server.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await server
+
+    try:
+        asyncio.run(exchange())
+    finally:
+        session.close()
 
 
 @pytest.mark.parametrize("eio", ["3", "4"])

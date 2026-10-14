@@ -1,3 +1,7 @@
 * text=auto eol=lf
 *.png binary
 *.jpg binary
+# Preserve frozen evidence bytes so published files retain their source SHA-256.
+reports/results/**/*.json -text
+reports/results/**/*.csv -text
+reports/results/**/*.yaml -text

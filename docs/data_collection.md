@@ -1,6 +1,8 @@
 # Collect your first real simulator dataset
 
-**PENDING REAL DATA. All quantities below are recommendations, not collected counts.**
+**Collection guidance.** Suggested quantities below are targets, not measured
+counts. The first recording's actual counts are in the
+[research report](../reports/research_report.md).
 
 1. Get the official **Term 1 Version 2** simulator using [simulator setup](simulator.md).
 2. Create an empty recording folder. The default destination is this repository's

@@ -12,6 +12,7 @@ import io
 import json
 import logging
 import uuid
+from pathlib import Path
 
 import numpy as np
 from aiohttp import WSMsgType, web
@@ -45,6 +46,7 @@ def encode_event(event: str, data: dict) -> str:
 def create_app(session: DriveSession) -> web.Application:
     app = web.Application(client_max_size=6_000_000)
     connected = False
+    sockets = set()
 
     async def socket(request: web.Request) -> web.StreamResponse:
         nonlocal connected
@@ -54,6 +56,7 @@ def create_app(session: DriveSession) -> web.Application:
             raise web.HTTPConflict(text="Only one simulator may connect to a drive session.")
         ws = web.WebSocketResponse(max_msg_size=6_000_000)
         await ws.prepare(request)
+        sockets.add(ws)
         connected = True
         sid = uuid.uuid4().hex
         await ws.send_str(
@@ -122,6 +125,7 @@ def create_app(session: DriveSession) -> web.Application:
             with contextlib.suppress(asyncio.CancelledError):
                 await task
             await ws.close()
+            sockets.discard(ws)
         return ws
 
     async def mark(request: web.Request) -> web.Response:
@@ -142,10 +146,31 @@ def create_app(session: DriveSession) -> web.Application:
                 "connected": connected,
                 "frames": session.frame,
                 "manual": session.manual,
+                "target_speed_mph": session.controller.target_speed,
+                "recorded_frames": session.recorded_frames,
+                "frame_limit_reached": session.recorded_frames >= session.max_recorded_frames,
             }
         )
 
     app.router.add_get("/socket.io/", socket)
     app.router.add_get("/", health)
     app.router.add_post("/event", mark)
+
+    async def shutdown(application):
+        for ws in tuple(sockets):
+            await ws.close(code=1001, message=b"Drive session ended")
+
+    app.on_shutdown.append(shutdown)
     return app
+
+
+async def run_until_stopped(session: DriveSession, port: int, stop_file: Path) -> None:
+    """Let the Windows launcher end the server without TerminateProcess losing cleanup."""
+    runner = web.AppRunner(create_app(session))
+    await runner.setup()
+    try:
+        await web.TCPSite(runner, "127.0.0.1", port).start()
+        while not stop_file.exists():
+            await asyncio.sleep(0.25)
+    finally:
+        await runner.cleanup()

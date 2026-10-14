@@ -1,6 +1,9 @@
 # Run artifacts
 
-**Real experiments: PENDING REAL DATA.** All generated artifacts remain ignored.
+**First personal recording evaluated.** Working experiment folders remain ignored.
+A reviewed aggregate snapshot is available in
+[reports/results/first_recording](../reports/results/first_recording), with
+[interpretation and limitations](../reports/research_report.md).
 
 Each named training folder in `experiments/results/` contains:
 

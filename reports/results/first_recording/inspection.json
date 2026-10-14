@@ -1,0 +1,42 @@
+{
+  "rows": 9459,
+  "valid_label_rows": 9459,
+  "invalid_rows": [],
+  "missing_images": [],
+  "corrupted_images": [],
+  "camera_counts": {
+    "center": 9459,
+    "left": 9459,
+    "right": 9459
+  },
+  "kind": "real",
+  "usable_images": 28377,
+  "status": "REAL DATA \u2014 OFFLINE EVALUATION; CLOSED-LOOP CLAIMS REQUIRE DRIVE LOGS",
+  "fingerprint": "4dba1907e0e2a18b162f211e23f0acd98c032d0f2cdccd20d3e1a925f7209518",
+  "steering_distribution": {
+    "count": 9459,
+    "mean": -0.03416323183211756,
+    "std": 0.14037566102191984,
+    "min": -1.0,
+    "max": 1.0,
+    "quantiles_5_50_95": [
+      -0.3,
+      0.0,
+      0.0
+    ]
+  },
+  "speed_distribution": {
+    "count": 9459,
+    "mean": 29.99894780515911,
+    "std": 1.6001184015349235,
+    "min": 1.400522,
+    "max": 30.60483,
+    "quantiles_5_50_95": [
+      30.152499,
+      30.19011,
+      30.19045
+    ]
+  },
+  "nearly_straight_definition": "abs(steering) < 0.05",
+  "nearly_straight_percent": 79.61729569721957
+}

@@ -95,8 +95,11 @@ def autonomy_metrics(folder: str | Path, penalty_seconds: float = 6.0) -> dict:
     )
     result = {
         "status": "RECORDED SIMULATOR RUN — HUMAN EVENT ANNOTATIONS"
+        if actual and len(events)
+        else "RECORDED SIMULATOR RUN — UNANNOTATED; PERFORMANCE NOT ESTABLISHED"
         if actual
         else "SYNTHETIC/TEST LOG ONLY — PENDING REAL DATA",
+        "annotation_count": len(events),
         "telemetry_frames": len(telemetry),
         "duration_seconds": duration,
         "interventions": len(takeovers),
@@ -118,15 +121,15 @@ def autonomy_metrics(folder: str | Path, penalty_seconds: float = 6.0) -> dict:
         else None,
         "penalty_seconds": penalty_seconds,
         "penalty_autonomy_percent": max(0, 1 - len(takeovers) * penalty_seconds / duration) * 100
-        if duration > 0
+        if duration > 0 and len(events)
         else None,
         "time_autonomy_percent": 100 * max(0, 1 - manual_seconds / duration)
-        if duration > 0
+        if duration > 0 and len(events)
         else None,
         "mean_absolute_steering_change": float(abs(changes).mean()) if len(changes) else None,
         "rms_steering_rate_per_second": float(np.sqrt(np.mean(rates**2))) if len(rates) else None,
         "laps": laps,
-        "limitations": "Events are manual annotations. Multiple failure events may describe one incident. Unfinished laps count as incomplete; fractional distance completion is unavailable.",
+        "limitations": "Metrics depend on complete human event annotations. Zero event counts mean none recorded, not verified absence. Unannotated runs have no autonomy score. Multiple failure events may describe one incident. Unfinished laps count as incomplete; fractional distance completion is unavailable.",
     }
     write_json(folder / "autonomy.json", result)
     return result

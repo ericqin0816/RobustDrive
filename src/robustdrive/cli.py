@@ -242,11 +242,13 @@ def figures_main() -> None:
 
 
 def drive_main() -> None:
+    import asyncio
+
     from aiohttp import web
 
     from robustdrive.simulator.controller import SpeedController
     from robustdrive.simulator.interface import DriveSession, NeuralSteering
-    from robustdrive.simulator.udacity import create_app
+    from robustdrive.simulator.udacity import create_app, run_until_stopped
 
     parser = argparse.ArgumentParser(
         description="Connect trained steering to Udacity on localhost:4567."
@@ -265,6 +267,9 @@ def drive_main() -> None:
         help="uncertainty.json fitted using this checkpoint's validation data",
     )
     parser.add_argument("--record-frames", action="store_true")
+    parser.add_argument("--record-fps", type=float, default=5.0, help="Maximum saved camera fps")
+    parser.add_argument("--max-recorded-frames", type=int, default=10000, help="Saved JPG limit")
+    parser.add_argument("--stop-file", type=Path, help="Exit cleanly when this local file appears")
     parser.add_argument(
         "--allow-synthetic",
         action="store_true",
@@ -292,11 +297,18 @@ def drive_main() -> None:
         {**policy.provenance, "source": "udacity-live"},
         threshold,
         args.record_frames,
+        args.record_fps,
+        args.max_recorded_frames,
     )
     print("Annotate in a second terminal with scripts/mark_event.py. Risk flags are observational.")
     print("Mark lap_start, takeovers/resumes, off_track/collision and lap_complete or lap_abort.")
     try:
-        web.run_app(create_app(session), host="127.0.0.1", port=args.port)
+        if args.stop_file:
+            asyncio.run(run_until_stopped(session, args.port, args.stop_file))
+        else:
+            web.run_app(create_app(session), host="127.0.0.1", port=args.port)
+    except KeyboardInterrupt:
+        pass
     finally:
         session.close()
 

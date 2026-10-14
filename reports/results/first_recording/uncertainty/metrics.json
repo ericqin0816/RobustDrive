@@ -1,0 +1,10 @@
+{
+  "status": "REAL DATA \u2014 OFFLINE EVALUATION; CLOSED-LOOP CLAIMS REQUIRE DRIVE LOGS",
+  "complete": true,
+  "best_validation_mse": 0.019216891619348316,
+  "best_epoch": 1,
+  "epochs_run": 7,
+  "training_seconds": 643.8642044000444,
+  "training_samples": 19818,
+  "parameters": 252219
+}

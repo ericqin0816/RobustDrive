@@ -1,16 +1,20 @@
 # Resume wording and evidence requirements
 
-## Accurate before real simulator experiments
+## Supported by the first personal recording
 
 - Implemented a PyTorch behavioral-cloning pipeline with a NVIDIA-inspired steering
   CNN, temporal data splits, recovery-camera augmentation, and a simulator adapter;
-  validated training and evaluation using explicitly synthetic smoke data.
+  trained on 6,606 personal simulator frames and evaluated on 1,404 chronological
+  test frames, achieving normalized steering RMSE 0.1252.
 - Developed reproducible image-corruption and Monte Carlo dropout tools to study
-  steering errors, high-error detection, and uncertainty-based prediction rejection.
+  steering errors across 11 corruptions and five nonzero severities; documented
+  a negative uncertainty result (clean high-error ROC-AUC 0.2837) rather than
+  claiming reliable failure prediction.
 
-Use wording you can personally explain and demonstrate. Do not say the model was
-trained on your simulator driving data until you have collected and used it.
-Do not describe protocol tests as autonomous-driving success.
+Use wording you can personally explain and demonstrate. The first recording has
+now been collected and used. The [research report](research_report.md) contains
+its evidence and limitations. Do not describe live control or protocol tests as
+verified autonomous lap success.
 
 ## Templates after verified real experiments
 
@@ -38,4 +42,6 @@ is a percent or an absolute difference. Report null/negative findings honestly.
 | Robustness change | Per-condition CSV, severity definitions, clean comparator |
 | Detection/rejection | Validation cutoff, test metrics, coverage table |
 
-**Research results: PENDING REAL DATA.**
+**First-recording offline evidence is available. Annotated lap completion,
+generalization, and advance-warning claims remain pending.** The rejection
+improvement template above is not supported by the current negative result.

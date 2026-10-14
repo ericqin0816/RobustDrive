@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-10-14T03:53:46.026438+00:00",
+  "seed": 42,
+  "python": "3.12.10",
+  "torch": "2.14.1+cpu",
+  "device": "cpu",
+  "parameters": 252219,
+  "git_commit": "8566dbe5ef3950ee8a30d445bb9713fe1b64c97e",
+  "git_dirty": false,
+  "data_kind": "real",
+  "status": "REAL DATA \u2014 OFFLINE EVALUATION; CLOSED-LOOP CLAIMS REQUIRE DRIVE LOGS",
+  "data_fingerprint": "4dba1907e0e2a18b162f211e23f0acd98c032d0f2cdccd20d3e1a925f7209518",
+  "training_samples": 19818,
+  "validation_samples": 1389,
+  "resume_from": null
+}

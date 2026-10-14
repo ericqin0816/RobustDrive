@@ -74,8 +74,10 @@ query variants, ping/pong, and default-namespace events. The legacy Unity client
 can advertise EIO=4 while using older packet behavior. This is not a general
 Socket.IO server; polling, binary attachments, and namespaces are unsupported.
 
-Synthetic tests cover the network exchange. **Actual Unity connection and laps
-remain PENDING MANUAL SIMULATOR TESTING.** Fork-specific protocol changes belong
+Synthetic tests cover the network exchange. **Actual Unity connection and steering
+were observed in the first personal trial; annotated lap metrics remain pending.**
+See the [recorded evidence](../reports/results/first_recording/drive_observation.json).
+Fork-specific protocol changes belong
 in `src/robustdrive/simulator/udacity.py`; training need not change.
 
 ## Troubleshooting

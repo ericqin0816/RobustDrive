@@ -1,0 +1,12 @@
+{
+  "status": "REAL DATA \u2014 OFFLINE EVALUATION; CLOSED-LOOP CLAIMS REQUIRE DRIVE LOGS",
+  "data_kind": "real",
+  "data_fingerprint": "4dba1907e0e2a18b162f211e23f0acd98c032d0f2cdccd20d3e1a925f7209518",
+  "checkpoint_sha256": "13b3fb09063fde3c6ad570e25e591d6531bd34d1217ed4c04a6356fb20dee4ea",
+  "split": "test",
+  "n": 1404,
+  "mse": 0.015672082095205223,
+  "mae": 0.07891396235956358,
+  "rmse": 0.12518818672384877,
+  "r2": 0.2493243969487844
+}

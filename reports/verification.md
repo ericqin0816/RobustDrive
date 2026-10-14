@@ -2,8 +2,9 @@
 
 **Verification date: October 13, 2026 (America/Chicago).**
 
-This document records software checks, not research results. **Every real-data
-experiment and real autonomous simulator lap remains PENDING REAL DATA.**
+This document records software checks. Real-data measurements from the first
+personal recording are in [the research report](research_report.md). Annotated
+autonomous lap completion and early-warning claims remain pending.
 
 ## Executed locally
 
@@ -18,7 +19,7 @@ experiment and real autonomous simulator lap remains PENDING REAL DATA.**
   figures. Visually inspected coverage and confidently-wrong image grids; the
   synthetic provenance footer is visible.
 - Trained and evaluated all five two-epoch synthetic ablation configurations.
-  Generated a separate synthetic comparison table. Real tables remain pending.
+  Generated a separate synthetic comparison table; it is not research evidence.
 - Ran the test suite, including exact CPU resume reproducibility, online/offline
   preprocessing equality, data-integrity rejection, metrics, and WebSocket tests.
 - Ran all major command-line `--help` entry points and lint checks.
@@ -60,7 +61,26 @@ stationary-frame filtering, synthetic-data rejection, and changed-snapshot rejec
 After final launcher refinements, the four recording tests and lint passed again.
 Native automated clicks were rejected by Windows (`SendInput`, error 87), so the
 user must select Training Mode and the recording folder in the game's menus.
-Actual Unity network steering and real autonomous performance remain unverified.
+At this initial setup stage, Unity network steering remained unverified. The
+subsequent real trial below established live control, with lap performance still
+unmeasured.
+
+## First recording and live trial
+
+The launcher completed training and offline analysis of 9,459 usable personal
+simulator rows. All three saved checkpoints and their report hashes were checked.
+A live Unity Autonomous Mode trial generated 65,503 telemetry rows over 524.954
+seconds. Saved camera samples and the running game were visually inspected. The
+model produced steering and held speed near 10.85 mph for a 12 mph target.
+There were no event annotations; this is not a verified lap-success result.
+
+The viewer now exposes 12–30 mph targets, rate-limits saved images to 5 fps with
+a 10,000-image ceiling, and requests graceful server shutdown when the game closes.
+Unannotated logs no longer imply 100% autonomy. The updated local suite passed
+**48 tests**, including higher speed targets, recording limits with complete
+telemetry, the missing-annotation case, and graceful shutdown with an open
+WebSocket. Lint and all CLI help checks passed. The updated launcher was reopened
+and its visible speed selector and enabled Watch button were checked.
 
 ## Reproduce
 
@@ -79,11 +99,10 @@ in the research report or resume.
 
 ## Not yet verified
 
-- Actual Unity simulator handshake/control on this machine.
-- Training/evaluation on personally collected real simulator images.
 - Autonomous lap completion, interventions, or road-departure warning lead time.
+- Actual driving performance at 20–30 mph.
 - Generalization across tracks, sessions, seeds, hardware, or simulator forks.
 
-The network tests emulate Udacity packets; they are not a substitute for driving
-the actual simulator. The offline error detector does not establish collision
+The network tests emulate Udacity packets; the separate live observation is
+documented above. The offline error detector does not establish collision
 prediction. Follow the collection and simulator guides to perform that next phase.

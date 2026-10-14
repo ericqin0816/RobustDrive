@@ -128,7 +128,7 @@ def launch(root: Path, attach_pid: int | None = None) -> None:
     root.joinpath("local").mkdir(exist_ok=True)
     window = tk.Tk()
     window.title("RobustDrive — Play & Learn")
-    window.geometry("630x440")
+    window.geometry("650x530")
     window.resizable(False, False)
     frame = ttk.Frame(window, padding=24)
     frame.pack(fill="both", expand=True)
@@ -161,6 +161,7 @@ def launch(root: Path, attach_pid: int | None = None) -> None:
         busy = True
         for button in (play_button, train_button, watch_button):
             button.state(["disabled"])
+        speed_choice.state(["disabled"])
 
         def work():
             try:
@@ -215,6 +216,9 @@ def launch(root: Path, attach_pid: int | None = None) -> None:
         background(work)
 
     def watch():
+        # Read Tk state on the UI thread before starting the worker.
+        target_speed = int(speed.get())
+
         def work():
             saved = json.loads((root / "local/play_status.json").read_text(encoding="utf-8"))
             if saved.get("status") != "ready":
@@ -233,6 +237,7 @@ def launch(root: Path, attach_pid: int | None = None) -> None:
                     ) from error
             run_name = "drive_play_" + datetime.now().strftime("%Y%m%d_%H%M%S")
             output = root / "experiments/results" / run_name
+            stop_file = output / "stop.request"
             log = (root / "local/watch_model.log").open("a", encoding="utf-8")
             server = subprocess.Popen(
                 [
@@ -242,7 +247,11 @@ def launch(root: Path, attach_pid: int | None = None) -> None:
                     str(checkpoint),
                     "--output",
                     str(output),
+                    "--target-speed",
+                    str(target_speed),
                     "--record-frames",
+                    "--stop-file",
+                    str(stop_file),
                 ],
                 cwd=root,
                 stdout=log,
@@ -282,19 +291,41 @@ def launch(root: Path, attach_pid: int | None = None) -> None:
                     cwd=simulator_path(root).parent,
                 )
                 notify(
-                    "Choose Autonomous Mode in the game. Supervise it; this is a first learned model."
+                    f"Choose Autonomous Mode. Target: {target_speed} mph. "
+                    "Watch how the model handles the track at this speed."
                 )
                 game.wait()
             finally:
                 if server.poll() is None:
-                    server.terminate()
-                    server.wait(timeout=15)
+                    output.mkdir(parents=True, exist_ok=True)
+                    stop_file.touch()
+                    try:
+                        server.wait(timeout=15)
+                    except subprocess.TimeoutExpired:
+                        server.terminate()
+                        server.wait(timeout=15)
                 log.close()
             notify(
                 "Drive log saved. Completion and intervention claims still need real event annotations."
             )
 
         background(work)
+
+    speed_row = ttk.Frame(frame)
+    speed_row.pack(fill="x", pady=(14, 0))
+    ttk.Label(speed_row, text="Model speed target (mph):").pack(side="left", padx=(0, 8))
+    speed = tk.StringVar(value="12")
+    speed_choice = ttk.Combobox(
+        speed_row, textvariable=speed, values=(12, 15, 20, 25, 30), width=5, state="readonly"
+    )
+    speed_choice.pack(side="left")
+    ttk.Label(
+        frame,
+        text="Applies when you click Watch my model. Actual speed may be lower.\n"
+        "The model learns steering; this setting controls speed separately.",
+        font=("Segoe UI", 9),
+        wraplength=600,
+    ).pack(anchor="w", pady=(4, 0))
 
     buttons = ttk.Frame(frame)
     buttons.pack(fill="x", pady=(16, 8))
@@ -312,6 +343,7 @@ def launch(root: Path, attach_pid: int | None = None) -> None:
     ).pack(anchor="w")
 
     def enable_idle_buttons():
+        speed_choice.state(["!disabled", "readonly"])
         for button in (play_button, train_button):
             button.state(["!disabled"])
         ready = False
@@ -323,8 +355,10 @@ def launch(root: Path, attach_pid: int | None = None) -> None:
             except (ValueError, KeyError):
                 pass
         watch_button.state(["!disabled"] if ready else ["disabled"])
+        return ready
 
-    enable_idle_buttons()
+    if enable_idle_buttons():
+        status.set("Your trained model is ready. Choose a speed, then Watch my model.")
 
     def refresh():
         nonlocal busy

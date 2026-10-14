@@ -1,0 +1,59 @@
+experiment:
+  name: play_438c62ffaa42_uncertainty
+  seed: 42
+  output_root: experiments/results
+data:
+  csv_path: data/processed/play_438c62ffaa42/driving_log.csv
+  image_root: null
+  kind: real
+  train_split: 0.7
+  validation_split: 0.15
+  test_split: 0.15
+  gap_frames: 30
+  invalid_policy: skip
+preprocessing:
+  target_height: 66
+  target_width: 200
+  crop_top: 50
+  crop_bottom: 20
+augmentation:
+  enabled: true
+  flip: true
+  flip_probability: 0.5
+  side_cameras: true
+  steering_correction: 0.2
+  brightness: true
+  contrast: true
+  shadows: true
+  translation: true
+  translation_pixels: 12
+  translation_correction: 0.002
+  rotation: false
+  rotation_degrees: 2.0
+  noise: true
+  blur: true
+model:
+  architecture: nvidia_cnn
+  dropout: 0.25
+training:
+  epochs: 30
+  batch_size: 64
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  patience: 6
+  num_workers: 0
+  device: auto
+  cpu_threads: 4
+  scheduler_patience: 2
+uncertainty:
+  mc_samples: 20
+  error_threshold: 0.15
+  validation_quantile: 0.9
+robustness:
+  severity_levels:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5

@@ -27,8 +27,24 @@ The final local suite passed **40 tests**. Package/PyTorch/torchvision/OpenCV
 imports and `pip check` passed. Every exploratory notebook code cell executed;
 the committed notebook intentionally retains empty outputs. Local software was
 Python 3.12.10, PyTorch 2.14.1+cpu, torchvision 0.29.1+cpu, and OpenCV 4.14.0.
-No CUDA device was available. Remote CI and final figure regeneration are being
-checked separately; their status will be recorded after completion.
+No CUDA device was available. A full repeat of `smoke.py --ablation` reused the
+completed models, re-ran all offline analyses, and succeeded. `make_figures.py`
+regenerated the saved figures successfully. All local Markdown links resolved.
+
+The actual `drive.py` CLI was also started on a separate loopback test port with
+the synthetic checkpoint. Six generated camera messages passed through the model
+with 20 dropout passes and produced bounded steering/throttle replies. The
+`evaluate_drive.py` CLI successfully processed those **synthetic protocol logs**.
+No vehicle was driven and no real lap was completed during this test.
+
+## GitHub delivery
+
+The project was pushed to the public [RobustDrive repository](https://github.com/ericqin0816/RobustDrive).
+The repository description, topics, files, README, and both rendered Mermaid
+diagrams were inspected in the signed-in browser. The workflow tests Linux/Python
+3.11 and Windows/Python 3.12 using CPU PyTorch. Current CI status is available on
+the [Actions page](https://github.com/ericqin0816/RobustDrive/actions/workflows/tests.yml)
+and README badge. CI never downloads the simulator or real datasets.
 
 ## Reproduce
 
